@@ -1,0 +1,436 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: >
+  LensCart Photography Equipment Store - 100% AWS Free Tier Serverless Architecture
+  (Lambda Function URLs, DynamoDB Always Free Provisioned Capacity, Cognito Lite Tier,
+  Private S3 + CloudFront OAC, SQS 20s Long Polling, SNS, EventBridge 24h Schedule,
+  3-Day CloudWatch Log Retention).
+  IMPORTANT: Do not deploy without explicit user approval.
+
+Parameters:
+  EnvironmentName:
+    Type: String
+    Default: production
+    AllowedValues: [development, staging, production]
+  TablePrefix:
+    Type: String
+    Default: lenscart
+  AllowedCorsOrigin:
+    Type: String
+    Default: https://d111111abcdef8.cloudfront.net
+
+Globals:
+  Function:
+    Runtime: python3.11
+    Timeout: 15
+    MemorySize: 256
+    Architectures: [x86_64]
+    Environment:
+      Variables:
+        APP_ENV: !Ref EnvironmentName
+        USE_LOCAL_AWS: 'false'
+        TABLE_PREFIX: !Ref TablePrefix
+        S3_MEDIA_BUCKET: !Ref ProductMediaBucket
+        SQS_ORDER_QUEUE_URL: !Ref OrderProcessingQueue
+        SNS_ORDER_TOPIC_ARN: !Ref OrderEventsTopic
+        CORS_ORIGINS: !Ref AllowedCorsOrigin
+
+Resources:
+  # ---------------------------------------------------------------------------
+  # 1. AMAZON COGNITO USER POOL (Lite / Essentials Free Tier - 10,000 MAUs Free)
+  # ---------------------------------------------------------------------------
+  LensCartUserPool:
+    Type: AWS::Cognito::UserPool
+    Properties:
+      UserPoolName: !Sub '${TablePrefix}-user-pool'
+      UsernameAttributes: [email]
+      AutoVerifiedAttributes: [email]
+      Policies:
+        PasswordPolicy:
+          MinimumLength: 8
+          RequireLowercase: true
+          RequireNumbers: true
+          RequireSymbols: false
+          RequireUppercase: true
+
+  LensCartUserPoolClient:
+    Type: AWS::Cognito::UserPoolClient
+    Properties:
+      ClientName: !Sub '${TablePrefix}-web-client'
+      UserPoolId: !Ref LensCartUserPool
+      GenerateSecret: false
+      ExplicitAuthFlows:
+        - ALLOW_USER_PASSWORD_AUTH
+        - ALLOW_REFRESH_TOKEN_AUTH
+        - ALLOW_USER_SRP_AUTH
+
+  CustomerUserGroup:
+    Type: AWS::Cognito::UserPoolGroup
+    Properties:
+      GroupName: Customer
+      Description: Standard customer role for shopping, cart, wishlist, and order tracking
+      UserPoolId: !Ref LensCartUserPool
+
+  AdminUserGroup:
+    Type: AWS::Cognito::UserPoolGroup
+    Properties:
+      GroupName: Admin
+      Description: Administrator role for catalog, inventory, order, and analytics management
+      UserPoolId: !Ref LensCartUserPool
+
+  # ---------------------------------------------------------------------------
+  # 2. AMAZON S3 BUCKETS (Private Frontend & Private Media + CloudFront OAC)
+  # ---------------------------------------------------------------------------
+  FrontendAssetsBucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      PublicAccessBlockConfiguration:
+        BlockPublicAcls: true
+        BlockPublicPolicy: true
+        IgnorePublicAcls: true
+        RestrictPublicBuckets: true
+
+  ProductMediaBucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      PublicAccessBlockConfiguration:
+        BlockPublicAcls: true
+        BlockPublicPolicy: true
+        IgnorePublicAcls: true
+        RestrictPublicBuckets: true
+      CorsConfiguration:
+        CorsRules:
+          - AllowedHeaders: ['*']
+            AllowedMethods: [PUT, GET, HEAD]
+            AllowedOrigins: [!Ref AllowedCorsOrigin]
+            MaxAge: 3000
+
+  CloudFrontOriginAccessControl:
+    Type: AWS::CloudFront::OriginAccessControl
+    Properties:
+      OriginAccessControlConfig:
+        Name: !Sub '${TablePrefix}-oac'
+        OriginAccessControlOriginType: s3
+        SigningBehavior: always
+        SigningProtocol: sigv4
+
+  FrontendCloudFrontDistribution:
+    Type: AWS::CloudFront::Distribution
+    Properties:
+      DistributionConfig:
+        Enabled: true
+        DefaultRootObject: index.html
+        PriceClass: PriceClass_100
+        HttpVersion: http2
+        Origins:
+          - Id: S3FrontendOrigin
+            DomainName: !GetAtt FrontendAssetsBucket.RegionalDomainName
+            OriginAccessControlId: !GetAtt CloudFrontOriginAccessControl.Id
+            S3OriginConfig:
+              OriginAccessIdentity: ''
+        DefaultCacheBehavior:
+          TargetOriginId: S3FrontendOrigin
+          ViewerProtocolPolicy: redirect-to-https
+          AllowedMethods: [GET, HEAD, OPTIONS]
+          CachedMethods: [GET, HEAD]
+          Compress: true
+          ForwardedValues:
+            QueryString: false
+        CustomErrorResponses:
+          - ErrorCode: 403
+            ResponseCode: 200
+            ResponsePagePath: /index.html
+          - ErrorCode: 404
+            ResponseCode: 200
+            ResponsePagePath: /index.html
+
+  # ---------------------------------------------------------------------------
+  # 3. AMAZON DYNAMODB TABLES (Capped within 25 RCU / 25 WCU Always Free Tier)
+  # ---------------------------------------------------------------------------
+  CategoriesTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: !Sub '${TablePrefix}-categories'
+      ProvisionedThroughput: { ReadCapacityUnits: 1, WriteCapacityUnits: 1 }
+      AttributeDefinitions:
+        - { AttributeName: tenant_scope, AttributeType: S }
+        - { AttributeName: category_id, AttributeType: S }
+        - { AttributeName: slug, AttributeType: S }
+        - { AttributeName: sort_order_str, AttributeType: S }
+      KeySchema:
+        - { AttributeName: tenant_scope, KeyType: HASH }
+        - { AttributeName: category_id, KeyType: RANGE }
+      GlobalSecondaryIndexes:
+        - IndexName: GSI1-Slug
+          KeySchema:
+            - { AttributeName: slug, KeyType: HASH }
+            - { AttributeName: sort_order_str, KeyType: RANGE }
+          Projection: { ProjectionType: ALL }
+          ProvisionedThroughput: { ReadCapacityUnits: 1, WriteCapacityUnits: 1 }
+
+  ProductsTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: !Sub '${TablePrefix}-products'
+      ProvisionedThroughput: { ReadCapacityUnits: 2, WriteCapacityUnits: 2 }
+      AttributeDefinitions:
+        - { AttributeName: product_id, AttributeType: S }
+        - { AttributeName: metadata, AttributeType: S }
+        - { AttributeName: category_id, AttributeType: S }
+        - { AttributeName: price_sort_key, AttributeType: S }
+        - { AttributeName: catalog_status, AttributeType: S }
+        - { AttributeName: popularity_sort_key, AttributeType: S }
+        - { AttributeName: mount_index_key, AttributeType: S }
+      KeySchema:
+        - { AttributeName: product_id, KeyType: HASH }
+        - { AttributeName: metadata, KeyType: RANGE }
+      GlobalSecondaryIndexes:
+        - IndexName: GSI1-CategoryPrice
+          KeySchema:
+            - { AttributeName: category_id, KeyType: HASH }
+            - { AttributeName: price_sort_key, KeyType: RANGE }
+          Projection: { ProjectionType: ALL }
+          ProvisionedThroughput: { ReadCapacityUnits: 1, WriteCapacityUnits: 1 }
+        - IndexName: GSI2-StatusPopularity
+          KeySchema:
+            - { AttributeName: catalog_status, KeyType: HASH }
+            - { AttributeName: popularity_sort_key, KeyType: RANGE }
+          Projection: { ProjectionType: ALL }
+          ProvisionedThroughput: { ReadCapacityUnits: 1, WriteCapacityUnits: 1 }
+        - IndexName: GSI3-LensMount
+          KeySchema:
+            - { AttributeName: mount_index_key, KeyType: HASH }
+            - { AttributeName: price_sort_key, KeyType: RANGE }
+          Projection: { ProjectionType: ALL }
+          ProvisionedThroughput: { ReadCapacityUnits: 1, WriteCapacityUnits: 1 }
+
+  InventoryTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: !Sub '${TablePrefix}-inventory'
+      ProvisionedThroughput: { ReadCapacityUnits: 2, WriteCapacityUnits: 2 }
+      AttributeDefinitions:
+        - { AttributeName: product_id, AttributeType: S }
+        - { AttributeName: record_type, AttributeType: S }
+        - { AttributeName: stock_alert_status, AttributeType: S }
+        - { AttributeName: qty_sort_key, AttributeType: S }
+      KeySchema:
+        - { AttributeName: product_id, KeyType: HASH }
+        - { AttributeName: record_type, KeyType: RANGE }
+      GlobalSecondaryIndexes:
+        - IndexName: GSI1-StockAlert
+          KeySchema:
+            - { AttributeName: stock_alert_status, KeyType: HASH }
+            - { AttributeName: qty_sort_key, KeyType: RANGE }
+          Projection: { ProjectionType: ALL }
+          ProvisionedThroughput: { ReadCapacityUnits: 1, WriteCapacityUnits: 1 }
+
+  CartsTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: !Sub '${TablePrefix}-carts'
+      ProvisionedThroughput: { ReadCapacityUnits: 1, WriteCapacityUnits: 1 }
+      AttributeDefinitions:
+        - { AttributeName: user_id, AttributeType: S }
+        - { AttributeName: item_id, AttributeType: S }
+      KeySchema:
+        - { AttributeName: user_id, KeyType: HASH }
+        - { AttributeName: item_id, KeyType: RANGE }
+
+  WishlistsTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: !Sub '${TablePrefix}-wishlists'
+      ProvisionedThroughput: { ReadCapacityUnits: 1, WriteCapacityUnits: 1 }
+      AttributeDefinitions:
+        - { AttributeName: user_id, AttributeType: S }
+        - { AttributeName: product_id, AttributeType: S }
+      KeySchema:
+        - { AttributeName: user_id, KeyType: HASH }
+        - { AttributeName: product_id, KeyType: RANGE }
+
+  AddressesTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: !Sub '${TablePrefix}-addresses'
+      ProvisionedThroughput: { ReadCapacityUnits: 1, WriteCapacityUnits: 1 }
+      AttributeDefinitions:
+        - { AttributeName: user_id, AttributeType: S }
+        - { AttributeName: address_id, AttributeType: S }
+      KeySchema:
+        - { AttributeName: user_id, KeyType: HASH }
+        - { AttributeName: address_id, KeyType: RANGE }
+
+  OrdersTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: !Sub '${TablePrefix}-orders'
+      ProvisionedThroughput: { ReadCapacityUnits: 2, WriteCapacityUnits: 2 }
+      AttributeDefinitions:
+        - { AttributeName: order_id, AttributeType: S }
+        - { AttributeName: record_type, AttributeType: S }
+        - { AttributeName: user_id, AttributeType: S }
+        - { AttributeName: created_sort_key, AttributeType: S }
+        - { AttributeName: order_status, AttributeType: S }
+        - { AttributeName: all_orders_partition, AttributeType: S }
+      KeySchema:
+        - { AttributeName: order_id, KeyType: HASH }
+        - { AttributeName: record_type, KeyType: RANGE }
+      GlobalSecondaryIndexes:
+        - IndexName: GSI1-UserOrders
+          KeySchema:
+            - { AttributeName: user_id, KeyType: HASH }
+            - { AttributeName: created_sort_key, KeyType: RANGE }
+          Projection: { ProjectionType: ALL }
+          ProvisionedThroughput: { ReadCapacityUnits: 1, WriteCapacityUnits: 1 }
+        - IndexName: GSI2-StatusOrders
+          KeySchema:
+            - { AttributeName: order_status, KeyType: HASH }
+            - { AttributeName: created_sort_key, KeyType: RANGE }
+          Projection: { ProjectionType: ALL }
+          ProvisionedThroughput: { ReadCapacityUnits: 1, WriteCapacityUnits: 1 }
+        - IndexName: GSI3-AllOrders
+          KeySchema:
+            - { AttributeName: all_orders_partition, KeyType: HASH }
+            - { AttributeName: created_sort_key, KeyType: RANGE }
+          Projection: { ProjectionType: ALL }
+          ProvisionedThroughput: { ReadCapacityUnits: 1, WriteCapacityUnits: 1 }
+
+  ReviewsTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: !Sub '${TablePrefix}-reviews'
+      ProvisionedThroughput: { ReadCapacityUnits: 1, WriteCapacityUnits: 1 }
+      AttributeDefinitions:
+        - { AttributeName: product_id, AttributeType: S }
+        - { AttributeName: review_sort, AttributeType: S }
+        - { AttributeName: user_id, AttributeType: S }
+      KeySchema:
+        - { AttributeName: product_id, KeyType: HASH }
+        - { AttributeName: review_sort, KeyType: RANGE }
+      GlobalSecondaryIndexes:
+        - IndexName: GSI1-UserReviews
+          KeySchema:
+            - { AttributeName: user_id, KeyType: HASH }
+            - { AttributeName: review_sort, KeyType: RANGE }
+          Projection: { ProjectionType: ALL }
+          ProvisionedThroughput: { ReadCapacityUnits: 1, WriteCapacityUnits: 1 }
+
+  # ---------------------------------------------------------------------------
+  # 4. AMAZON SQS & SNS (20s Long Polling + DLQ for Free Tier Request Conservation)
+  # ---------------------------------------------------------------------------
+  OrderProcessingDLQ:
+    Type: AWS::SQS::Queue
+    Properties:
+      QueueName: !Sub '${TablePrefix}-order-dlq'
+      MessageRetentionPeriod: 604800
+
+  OrderProcessingQueue:
+    Type: AWS::SQS::Queue
+    Properties:
+      QueueName: !Sub '${TablePrefix}-order-queue'
+      ReceiveMessageWaitTimeSeconds: 20
+      VisibilityTimeout: 60
+      RedrivePolicy:
+        deadLetterTargetArn: !GetAtt OrderProcessingDLQ.Arn
+        maxReceiveCount: 3
+
+  OrderEventsTopic:
+    Type: AWS::SNS::Topic
+    Properties:
+      TopicName: !Sub '${TablePrefix}-order-events'
+
+  # ---------------------------------------------------------------------------
+  # 5. AWS LAMBDA FUNCTIONS + FUNCTION URL + 3-DAY CLOUDWATCH LOG RETENTION
+  # ---------------------------------------------------------------------------
+  CoreApiFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      FunctionName: !Sub '${TablePrefix}-core-api'
+      CodeUri: ../../backend/
+      Handler: app.handlers.api_handler.handler
+      FunctionUrlConfig:
+        AuthType: NONE
+        Cors:
+          AllowOrigins: [!Ref AllowedCorsOrigin]
+          AllowMethods: [GET, POST, PATCH, DELETE, OPTIONS]
+          AllowHeaders: [Authorization, Content-Type, X-Request-Id]
+      Policies:
+        - DynamoDBCrudPolicy: { TableName: !Ref CategoriesTable }
+        - DynamoDBCrudPolicy: { TableName: !Ref ProductsTable }
+        - DynamoDBCrudPolicy: { TableName: !Ref InventoryTable }
+        - DynamoDBCrudPolicy: { TableName: !Ref CartsTable }
+        - DynamoDBCrudPolicy: { TableName: !Ref WishlistsTable }
+        - DynamoDBCrudPolicy: { TableName: !Ref AddressesTable }
+        - DynamoDBCrudPolicy: { TableName: !Ref OrdersTable }
+        - DynamoDBCrudPolicy: { TableName: !Ref ReviewsTable }
+        - S3CrudPolicy: { BucketName: !Ref ProductMediaBucket }
+        - SQSSendMessagePolicy: { QueueName: !GetAtt OrderProcessingQueue.QueueName }
+        - SNSPublishMessagePolicy: { TopicName: !GetAtt OrderEventsTopic.TopicName }
+
+  CoreApiLogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: !Sub '/aws/lambda/${CoreApiFunction}'
+      RetentionInDays: 3
+
+  SqsOrderWorkerFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      FunctionName: !Sub '${TablePrefix}-sqs-order-worker'
+      CodeUri: ../../backend/
+      Handler: app.handlers.sqs_worker.lambda_handler
+      Events:
+        OrderQueueEvent:
+          Type: SQS
+          Properties:
+            Queue: !GetAtt OrderProcessingQueue.Arn
+            BatchSize: 5
+            FunctionResponseTypes: [ReportBatchItemFailures]
+      Policies:
+        - DynamoDBCrudPolicy: { TableName: !Ref OrdersTable }
+        - SNSPublishMessagePolicy: { TopicName: !GetAtt OrderEventsTopic.TopicName }
+
+  SqsOrderWorkerLogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: !Sub '/aws/lambda/${SqsOrderWorkerFunction}'
+      RetentionInDays: 3
+
+  EventBridgeMaintenanceFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      FunctionName: !Sub '${TablePrefix}-daily-maintenance'
+      CodeUri: ../../backend/
+      Handler: app.handlers.eventbridge_worker.lambda_handler
+      Events:
+        DailyAuditSchedule:
+          Type: Schedule
+          Properties:
+            Schedule: rate(1 day)
+            Description: Runs once every 24h for low-stock & stale order checks
+      Policies:
+        - DynamoDBReadPolicy: { TableName: !Ref InventoryTable }
+        - DynamoDBReadPolicy: { TableName: !Ref OrdersTable }
+        - SNSPublishMessagePolicy: { TopicName: !GetAtt OrderEventsTopic.TopicName }
+
+  EventBridgeMaintenanceLogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: !Sub '/aws/lambda/${EventBridgeMaintenanceFunction}'
+      RetentionInDays: 3
+
+Outputs:
+  ApiFunctionUrl:
+    Description: AWS Lambda Function URL for LensCart FastAPI Backend
+    Value: !GetAtt CoreApiFunctionUrl.FunctionUrl
+  CloudFrontDomainName:
+    Description: HTTPS CloudFront Distribution Domain for LensCart Frontend
+    Value: !GetAtt FrontendCloudFrontDistribution.DomainName
+  CognitoUserPoolId:
+    Description: Amazon Cognito User Pool ID
+    Value: !Ref LensCartUserPool
+  CognitoClientId:
+    Description: Amazon Cognito App Client ID
+    Value: !Ref LensCartUserPoolClient
+

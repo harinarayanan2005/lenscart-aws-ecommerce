@@ -1,0 +1,44 @@
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Sid": "LeastPrivilegeDynamoDBAccess",
+      "Effect": "Allow",
+      "Action": [
+        "dynamodb:GetItem",
+        "dynamodb:PutItem",
+        "dynamodb:UpdateItem",
+        "dynamodb:DeleteItem",
+        "dynamodb:Query",
+        "dynamodb:BatchGetItem",
+        "dynamodb:TransactWriteItems"
+      ],
+      "Resource": [
+        "arn:aws:dynamodb:*:*:table/lenscart-*",
+        "arn:aws:dynamodb:*:*:table/lenscart-*/index/*"
+      ]
+    },
+    {
+      "Sid": "DenyRoutineTableScans",
+      "Effect": "Deny",
+      "Action": ["dynamodb:Scan"],
+      "Resource": ["arn:aws:dynamodb:*:*:table/lenscart-*"]
+    },
+    {
+      "Sid": "PrivateProductMediaPresignedAccess",
+      "Effect": "Allow",
+      "Action": ["s3:PutObject", "s3:GetObject"],
+      "Resource": ["arn:aws:s3:::lenscart-product-media-private/products/*"]
+    },
+    {
+      "Sid": "OrderQueueAndTopicMessaging",
+      "Effect": "Allow",
+      "Action": ["sqs:SendMessage", "sqs:ReceiveMessage", "sqs:DeleteMessage", "sns:Publish"],
+      "Resource": [
+        "arn:aws:sqs:*:*:lenscart-order-queue",
+        "arn:aws:sns:*:*:lenscart-order-events"
+      ]
+    }
+  ]
+}
+

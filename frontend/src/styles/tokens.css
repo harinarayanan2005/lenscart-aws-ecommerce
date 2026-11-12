@@ -1,0 +1,104 @@
+:root,
+[data-theme='light'] {
+  /* Brand & Accent Colors (Leica/Hasselblad inspired editorial palette) */
+  --lc-bg-primary: #faf9f6;
+  --lc-bg-secondary: #f2f0eb;
+  --lc-bg-surface: #ffffff;
+  --lc-bg-elevated: #ffffff;
+  --lc-bg-subtle: #f5f4f0;
+
+  --lc-text-primary: #141413;
+  --lc-text-secondary: #52514e;
+  --lc-text-muted: #787672;
+  --lc-text-inverse: #faf9f6;
+
+  --lc-accent-primary: #c83e2b;
+  --lc-accent-hover: #a93120;
+  --lc-accent-subtle: rgba(200, 62, 43, 0.08);
+
+  --lc-dark-btn: #141413;
+  --lc-dark-btn-hover: #2c2b29;
+  --lc-dark-btn-text: #ffffff;
+
+  --lc-border-color: #e4e2dd;
+  --lc-border-strong: #c9c6be;
+
+  --lc-success: #1f7a4c;
+  --lc-success-bg: #eaf5ef;
+  --lc-warning: #b4690e;
+  --lc-warning-bg: #fef5e7;
+  --lc-danger: #c0292b;
+  --lc-danger-bg: #fdeaea;
+  --lc-info: #1d5d9b;
+  --lc-info-bg: #e8f1fa;
+
+  /* Typography */
+  --lc-font-sans: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  --lc-font-serif: 'Playfair Display', Georgia, serif;
+  --lc-font-mono: 'JetBrains Mono', monospace;
+
+  /* Spacing Scale */
+  --lc-space-1: 0.25rem;
+  --lc-space-2: 0.5rem;
+  --lc-space-3: 0.75rem;
+  --lc-space-4: 1rem;
+  --lc-space-5: 1.5rem;
+  --lc-space-6: 2rem;
+  --lc-space-8: 3rem;
+  --lc-space-10: 4rem;
+
+  /* Radii */
+  --lc-radius-sm: 4px;
+  --lc-radius-md: 8px;
+  --lc-radius-lg: 12px;
+  --lc-radius-pill: 9999px;
+
+  /* Shadows */
+  --lc-shadow-xs: 0 1px 2px rgba(20, 20, 19, 0.04);
+  --lc-shadow-sm: 0 2px 8px rgba(20, 20, 19, 0.06);
+  --lc-shadow-md: 0 8px 24px rgba(20, 20, 19, 0.08);
+  --lc-shadow-lg: 0 16px 40px rgba(20, 20, 19, 0.12);
+
+  /* Transitions */
+  --lc-transition-fast: 150ms cubic-bezier(0.22, 1, 0.36, 1);
+  --lc-transition-normal: 240ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+[data-theme='dark'] {
+  --lc-bg-primary: #0f0f0f;
+  --lc-bg-secondary: #171717;
+  --lc-bg-surface: #1b1b1b;
+  --lc-bg-elevated: #242424;
+  --lc-bg-subtle: #1f1f1f;
+
+  --lc-text-primary: #f3f2ee;
+  --lc-text-secondary: #b5b3ad;
+  --lc-text-muted: #85837d;
+  --lc-text-inverse: #141413;
+
+  --lc-accent-primary: #e04f3a;
+  --lc-accent-hover: #f2624d;
+  --lc-accent-subtle: rgba(224, 79, 58, 0.15);
+
+  --lc-dark-btn: #f3f2ee;
+  --lc-dark-btn-hover: #dcdad3;
+  --lc-dark-btn-text: #141413;
+
+  --lc-border-color: #2b2b2b;
+  --lc-border-strong: #3d3d3d;
+
+  --lc-success: #3dd68c;
+  --lc-success-bg: rgba(61, 214, 140, 0.12);
+  --lc-warning: #f5a623;
+  --lc-warning-bg: rgba(245, 166, 35, 0.12);
+  --lc-danger: #f25f5c;
+  --lc-danger-bg: rgba(242, 95, 92, 0.12);
+  --lc-info: #56a8f5;
+  --lc-info-bg: rgba(86, 168, 245, 0.12);
+
+  --lc-shadow-xs: 0 1px 2px rgba(0, 0, 0, 0.25);
+  --lc-shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.35);
+  --lc-shadow-md: 0 8px 24px rgba(0, 0, 0, 0.45);
+  --lc-shadow-lg: 0 16px 40px rgba(0, 0, 0, 0.65);
+}
+

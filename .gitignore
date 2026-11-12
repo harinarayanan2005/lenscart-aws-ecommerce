@@ -1,0 +1,32 @@
+# Dependencies & virtual environments
+node_modules/
+frontend/node_modules/
+frontend/dist/
+.venv/
+venv/
+ENV/
+__pycache__/
+*.py[cod]
+*$py.class
+.pytest_cache/
+.aws-sam/
+
+# Environment & Secret files (NEVER COMMIT)
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+backend/.env
+frontend/.env
+samconfig.toml
+*.pem
+*.key
+*credentials*
+
+# OS & Editor files
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+*.log
