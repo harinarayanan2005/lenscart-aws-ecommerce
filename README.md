@@ -85,50 +85,27 @@ flowchart TB
 
 ---
 
-## Seeded Evaluation Accounts
+## 3-Tier AWS Serverless Deployment (`ap-south-1`)
 
-| Role | Email | Password | Capabilities |
-| :--- | :--- | :--- | :--- |
-| **Customer** | `elena.vance@lenscart.store` | `Customer@Lens2026` | Browse, compare, check compatibility, cart, wishlist, checkout, cancel orders, write reviews |
-| **Admin** | `admin@lenscart.store` | `Admin@Lens2026` | Full access to `/admin` dashboard, product CRUD, S3 presigned uploads, inventory adjustments, order & customer management |
+| Architecture Tier | AWS Services | Responsibility |
+| :--- | :--- | :--- |
+| **Tier 1: Presentation** | Private **Amazon S3** (x2) + **Amazon CloudFront** (OAC) | Delivers the React/Vite SPA and private `product_media/*` photography over HTTPS. |
+| **Tier 2: Application & Identity** | **AWS Lambda** (x3 + Function URL) + **Amazon Cognito** + **SQS** + **SNS** + **EventBridge** | FastAPI REST API (Mangum), RS256 JWKS auth (`customers` & `administrators`), async order worker, SNS alerts, and scheduled audits. |
+| **Tier 3: Database** | **Amazon DynamoDB** (8 Tables + 10 GSIs) | Serverless NoSQL persistence for categories, products, inventory, carts, wishlists, addresses, orders, and reviews. |
 
----
+### Infrastructure & Deployment
 
-## Local Development Instructions
-
-### 1. Start the Backend (FastAPI + Local Moto DynamoDB/S3/SQS/SNS Emulation)
-```powershell
-cd d:\PROJECTS\lenscart\backend
-python -m pip install -r requirements.txt
-python -m uvicorn app.main:app --host 127.0.0.1 --port 8000 --reload
-```
-- API Server: `http://127.0.0.1:8000`
-- Interactive OpenAPI Docs: `http://127.0.0.1:8000/docs`
-
-### 2. Start the Frontend (React + TypeScript + Vite)
-```powershell
-cd d:\PROJECTS\lenscart\frontend
-npm.cmd install
-npm.cmd run dev
-```
-- Web Application: `http://localhost:5173`
-
-### 3. Run the Automated Test Suites
-```powershell
-# Backend Unit, Integration, RBAC, Customer Isolation & Inventory Consistency Tests
-cd d:\PROJECTS\lenscart\backend
-python -m pytest -v
-
-# Frontend Component & Redux State Tests
-cd d:\PROJECTS\lenscart\frontend
-npm.cmd test
-```
+Infrastructure is defined as code in [`infrastructure/sam/template.yaml`](infrastructure/sam/template.yaml). See [`docs/DEPLOYMENT_GUIDE.md`](docs/DEPLOYMENT_GUIDE.md) for deployment steps using AWS CLI and AWS SAM CLI.
 
 ---
 
 ## Documentation Index
-- [System Architecture & AWS Integration](file:///d:/PROJECTS/lenscart/docs/ARCHITECTURE_AND_DESIGN.md)
-- [DynamoDB Database Design & GSI Access Patterns](file:///d:/PROJECTS/lenscart/docs/DATABASE_DESIGN.md)
-- [REST API Contract & Environment Variables](file:///d:/PROJECTS/lenscart/docs/API_REFERENCE.md)
-- [AWS SAM Deployment & Free Tier Cost-Control Guide](file:///d:/PROJECTS/lenscart/docs/AWS_DEPLOYMENT_AND_FREE_TIER_GUIDE.md)
+- [Project Overview](docs/PROJECT_OVERVIEW.md)
+- [3-Tier System Architecture & AWS Integration](docs/ARCHITECTURE.md)
+- [Project Folder Structure](docs/FOLDER_STRUCTURE.md)
+- [DynamoDB Database Design & GSI Access Patterns](docs/DATABASE_DESIGN.md)
+- [REST API Documentation](docs/API_DOCUMENTATION.md)
+- [AWS Configuration & Environment Reference](docs/AWS_CONFIGURATION.md)
+- [AWS SAM Deployment & Free-Tier Cost Guide](docs/DEPLOYMENT_GUIDE.md)
+- [Security & Access Control Guide](docs/SECURITY_GUIDE.md)
 
