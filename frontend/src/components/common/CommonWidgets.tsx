@@ -210,3 +210,19 @@ export const ToastContainer: React.FC = () => {
   );
 };
 
+export const LoadingSpinner: React.FC<{ label?: string }> = ({ label = 'Loading...' }) => (
+  <div className="d-flex flex-column align-items-center justify-content-center py-5 my-4">
+    <div
+      className="spinner-border mb-3"
+      role="status"
+      style={{ color: 'var(--lc-accent)', width: '2.25rem', height: '2.25rem' }}
+    >
+      <span className="visually-hidden">{label}</span>
+    </div>
+    <span className="small fw-medium" style={{ color: 'var(--lc-text-muted)' }}>
+      {label}
+    </span>
+  </div>
+);
+
+

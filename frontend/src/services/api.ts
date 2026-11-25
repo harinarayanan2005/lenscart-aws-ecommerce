@@ -15,7 +15,51 @@ import type {
   WishlistItem,
 } from '../types';
 
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://127.0.0.1:8000';
+export const API_BASE_URL = (import.meta.env.VITE_API_BASE_URL || 'http://127.0.0.1:8000').replace(
+  /\/+$/,
+  ''
+);
+export const CLOUDFRONT_MEDIA_URL = (import.meta.env.VITE_CLOUDFRONT_MEDIA_URL || '').replace(
+  /\/+$/,
+  ''
+);
+
+export function resolveMediaAssetUrl(pathOrUrl: string): string {
+  if (!pathOrUrl) return '';
+  if (pathOrUrl.startsWith('http://') || pathOrUrl.startsWith('https://') || pathOrUrl.startsWith('data:')) {
+    return pathOrUrl;
+  }
+  const clean = pathOrUrl.replace(/^\/+/, '');
+  if (CLOUDFRONT_MEDIA_URL) {
+    const key = clean.startsWith('media/') ? clean.slice('media/'.length) : clean;
+    return `${CLOUDFRONT_MEDIA_URL}/${key}`;
+  }
+  if (pathOrUrl.startsWith('/media/')) {
+    return `${API_BASE_URL}${pathOrUrl}`;
+  }
+  if (clean.startsWith('product_media/')) {
+    return `${API_BASE_URL}/media/${clean}`;
+  }
+  return pathOrUrl;
+}
+
+function transformMediaUrlsInPayload<T>(input: T): T {
+  if (!input || typeof input !== 'object') return input;
+  if (Array.isArray(input)) {
+    return input.map((item) => transformMediaUrlsInPayload(item)) as unknown as T;
+  }
+  const record = { ...(input as Record<string, unknown>) };
+  for (const [k, v] of Object.entries(record)) {
+    if ((k === 'image' || k === 'hero_image' || k === 'thumbnail_image') && typeof v === 'string') {
+      record[k] = resolveMediaAssetUrl(v);
+    } else if (k === 'images' && Array.isArray(v)) {
+      record[k] = v.map((img) => (typeof img === 'string' ? resolveMediaAssetUrl(img) : img));
+    } else if (v && typeof v === 'object') {
+      record[k] = transformMediaUrlsInPayload(v);
+    }
+  }
+  return record as T;
+}
 
 export const apiClient = axios.create({
   baseURL: API_BASE_URL,
@@ -26,6 +70,7 @@ export const apiClient = axios.create({
 });
 
 export const TOKEN_STORAGE_KEY = 'lenscart_jwt_token';
+export const REFRESH_TOKEN_STORAGE_KEY = 'lenscart_refresh_token';
 export const USER_STORAGE_KEY = 'lenscart_user_profile';
 
 apiClient.interceptors.request.use((config: InternalAxiosRequestConfig) => {
@@ -34,6 +79,13 @@ apiClient.interceptors.request.use((config: InternalAxiosRequestConfig) => {
     config.headers.Authorization = `Bearer ${token}`;
   }
   return config;
+});
+
+apiClient.interceptors.response.use((response) => {
+  if (response.data) {
+    response.data = transformMediaUrlsInPayload(response.data);
+  }
+  return response;
 });
 
 export function extractErrorMessage(error: unknown): string {
@@ -54,24 +106,55 @@ export function extractErrorMessage(error: unknown): string {
 export const authApi = {
   login: async (email: string, password: string) => {
     const { data } = await apiClient.post<
-      ApiResponse<{ access_token: string; id_token: string; user: UserProfile }>
+      ApiResponse<{
+        access_token: string;
+        id_token: string;
+        refresh_token?: string;
+        user: UserProfile;
+      }>
     >('/auth/login', { email, password });
     return data.data;
   },
   register: async (payload: { name: string; email: string; password: string; phone?: string }) => {
     const { data } = await apiClient.post<
-      ApiResponse<{ access_token: string; id_token: string; user: UserProfile }>
+      ApiResponse<{
+        access_token: string;
+        id_token: string;
+        refresh_token?: string;
+        requires_confirmation?: boolean;
+        user: UserProfile;
+      }>
     >('/auth/register', payload);
     return data.data;
   },
-  requestPasswordReset: async (email: string) => {
-    const { data } = await apiClient.post<ApiResponse<{ message: string; reset_code_hint?: string }>>(
-      '/auth/forgot-password',
-      { email }
+  confirmSignup: async (payload: { email: string; confirmation_code: string }) => {
+    const { data } = await apiClient.post<ApiResponse<{ confirmed: boolean; email: string }>>(
+      '/auth/confirm-signup',
+      payload
     );
     return data.data;
   },
-  confirmPasswordReset: async (payload: { email: string; verification_code: string; new_password: string }) => {
+  refreshSession: async (refreshToken: string) => {
+    const { data } = await apiClient.post<
+      ApiResponse<{ access_token: string; id_token: string; refresh_token: string }>
+    >('/auth/refresh', { refresh_token: refreshToken });
+    return data.data;
+  },
+  logout: async () => {
+    const { data } = await apiClient.post<ApiResponse<{ message: string }>>('/auth/logout');
+    return data.data;
+  },
+  requestPasswordReset: async (email: string) => {
+    const { data } = await apiClient.post<
+      ApiResponse<{ message: string; reset_code_hint?: string }>
+    >('/auth/forgot-password', { email });
+    return data.data;
+  },
+  confirmPasswordReset: async (payload: {
+    email: string;
+    verification_code: string;
+    new_password: string;
+  }) => {
     const { data } = await apiClient.post<ApiResponse<{ message: string }>>(
       '/auth/reset-password',
       payload
@@ -263,15 +346,24 @@ export const adminApi = {
     filename: string;
     content_type: string;
     file_size_bytes: number;
+    category_folder?: string;
   }) => {
     const { data } = await apiClient.post<
       ApiResponse<{
         upload_url: string;
         public_asset_url: string;
+        delivery_url?: string;
         object_key: string;
         expires_in: number;
       }>
     >('/admin/products/upload-url', payload);
+    return data.data;
+  },
+  deleteProductImage: async (objectKey: string) => {
+    const { data } = await apiClient.post<ApiResponse<{ deleted: boolean; object_key: string }>>(
+      '/admin/products/delete-image',
+      { object_key: objectKey }
+    );
     return data.data;
   },
   getOrders: async (params?: { status?: string; search?: string }) => {
@@ -301,6 +393,12 @@ export const adminApi = {
     );
     return data.data;
   },
+  getInventoryLogs: async (productId: string) => {
+    const { data } = await apiClient.get<ApiResponse<Array<Record<string, unknown>>>>(
+      `/admin/inventory/${encodeURIComponent(productId)}/logs`
+    );
+    return data.data;
+  },
   getCustomers: async () => {
     const { data } = await apiClient.get<
       ApiResponse<
@@ -323,4 +421,3 @@ export const adminApi = {
     return data.data;
   },
 };
-

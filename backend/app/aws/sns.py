@@ -15,6 +15,8 @@ def get_sns_client():
 
 def ensure_order_topic() -> str:
     global _topic_arn_cache
+    if not settings.USE_LOCAL_AWS and settings.effective_sns_topic_arn:
+        return settings.effective_sns_topic_arn
     if _topic_arn_cache:
         return _topic_arn_cache
     sns = get_sns_client()
@@ -26,6 +28,9 @@ def ensure_order_topic() -> str:
 
 def publish_order_notification(subject: str, payload: Dict[str, Any]) -> str:
     """Publishes an order update or low-stock alert to Amazon SNS."""
+    if not settings.USE_LOCAL_AWS and not settings.effective_sns_topic_arn:
+        logger.info(f"SNS topic not configured; skipping SNS publish for '{subject}'.")
+        return ""
     sns = get_sns_client()
     topic_arn = ensure_order_topic()
     resp = sns.publish(
@@ -39,4 +44,3 @@ def publish_order_notification(subject: str, payload: Dict[str, Any]) -> str:
         extra={"extra_data": {"sns_message_id": msg_id, "topic_arn": topic_arn}},
     )
     return msg_id
-

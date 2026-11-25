@@ -1,0 +1,30 @@
+{
+  "Comment": "LensCart CloudFront OAC Dual-Origin Reference Configuration (Frontend SPA + Private Product Media S3)",
+  "DefaultRootObject": "index.html",
+  "HttpVersion": "http2",
+  "PriceClass": "PriceClass_200",
+  "Origins": [
+    {
+      "Id": "S3FrontendOrigin",
+      "DomainName": "<FrontendAssetsBucket>.s3.ap-south-1.amazonaws.com",
+      "OriginAccessControlId": "<CloudFrontOriginAccessControlId>"
+    },
+    {
+      "Id": "S3MediaOrigin",
+      "DomainName": "<ProductMediaBucket>.s3.ap-south-1.amazonaws.com",
+      "OriginAccessControlId": "<CloudFrontOriginAccessControlId>"
+    }
+  ],
+  "CacheBehaviors": [
+    {
+      "PathPattern": "product_media/*",
+      "TargetOriginId": "S3MediaOrigin",
+      "ViewerProtocolPolicy": "redirect-to-https"
+    }
+  ],
+  "CustomErrorResponses": [
+    { "ErrorCode": 403, "ResponseCode": 200, "ResponsePagePath": "/index.html" },
+    { "ErrorCode": 404, "ResponseCode": 200, "ResponsePagePath": "/index.html" }
+  ]
+}
+

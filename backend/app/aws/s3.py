@@ -1,3 +1,4 @@
+from pathlib import Path
 import re
 import uuid
 import boto3
@@ -11,6 +12,17 @@ ALLOWED_IMAGE_CONTENT_TYPES = {
     "image/jpeg": ".jpg",
     "image/png": ".png",
     "image/webp": ".webp",
+    "image/svg+xml": ".svg",
+}
+
+VALID_MEDIA_FOLDERS = {
+    "cameras",
+    "lenses",
+    "tripods",
+    "lighting",
+    "audio",
+    "accessories",
+    "storage",
 }
 
 
@@ -31,7 +43,7 @@ def ensure_media_bucket_exists() -> None:
                 Bucket=settings.S3_MEDIA_BUCKET,
                 CreateBucketConfiguration={"LocationConstraint": settings.AWS_REGION},
             )
-        # Enforce private bucket policy (block public access)
+        # Enforce private bucket policy (BlockPublicAccess = True)
         s3.put_public_access_block(
             Bucket=settings.S3_MEDIA_BUCKET,
             PublicAccessBlockConfiguration={
@@ -43,8 +55,43 @@ def ensure_media_bucket_exists() -> None:
         )
 
 
+def resolve_media_url(key_or_url: str) -> str:
+    """
+    Resolves a stored S3 object key (e.g. `product_media/cameras/sony-a7rv-1.svg`)
+    into a deliverable frontend URL without exposing the private S3 bucket publicly:
+      1. If already a full URL or `/media/` path, returns it unchanged.
+      2. If `CLOUDFRONT_MEDIA_DOMAIN` is configured, returns the CloudFront OAC HTTPS URL.
+      3. If `USE_LOCAL_AWS=True`, returns `/media/{object_key}` served by the local media route.
+      4. In AWS production without a separate CloudFront media domain, generates a short-lived
+         S3 Presigned GET URL (1 hour expiry).
+    """
+    if not key_or_url:
+        return ""
+    cleaned = key_or_url.strip()
+    if cleaned.startswith(("http://", "https://", "/media/", "data:")):
+        return cleaned
+
+    normalized_key = cleaned.lstrip("/")
+    if settings.CLOUDFRONT_MEDIA_DOMAIN:
+        domain = settings.CLOUDFRONT_MEDIA_DOMAIN.rstrip("/").replace("https://", "").replace("http://", "")
+        return f"https://{domain}/{normalized_key}"
+
+    if settings.USE_LOCAL_AWS:
+        return f"/media/{normalized_key}"
+
+    s3 = get_s3_client()
+    return s3.generate_presigned_url(
+        ClientMethod="get_object",
+        Params={"Bucket": settings.S3_MEDIA_BUCKET, "Key": normalized_key},
+        ExpiresIn=3600,
+    )
+
+
 def generate_presigned_image_upload(
-    filename: str, content_type: str, file_size_bytes: int
+    filename: str,
+    content_type: str,
+    file_size_bytes: int,
+    category_folder: str = "cameras",
 ) -> dict[str, str | int]:
     """
     Validates file type & size and generates a short-lived S3 presigned PUT URL
@@ -64,11 +111,16 @@ def generate_presigned_image_upload(
             status.HTTP_400_BAD_REQUEST,
         )
 
+    folder = category_folder.strip().lower()
+    if folder not in VALID_MEDIA_FOLDERS:
+        folder = "cameras"
+
     safe_stem = re.sub(r"[^a-zA-Z0-9_-]", "-", filename.rsplit(".", 1)[0])[:40]
     ext = ALLOWED_IMAGE_CONTENT_TYPES[content_type]
-    object_key = f"products/{uuid.uuid4().hex[:12]}-{safe_stem}{ext}"
+    object_key = f"product_media/{folder}/{uuid.uuid4().hex[:12]}-{safe_stem}{ext}"
 
-    ensure_media_bucket_exists()
+    if settings.USE_LOCAL_AWS:
+        ensure_media_bucket_exists()
     s3 = get_s3_client()
     upload_url = s3.generate_presigned_url(
         ClientMethod="put_object",
@@ -79,11 +131,43 @@ def generate_presigned_image_upload(
         },
         ExpiresIn=300,
     )
+    delivery_url = resolve_media_url(object_key)
 
     return {
         "upload_url": upload_url,
         "object_key": object_key,
-        "public_asset_url": f"https://{settings.S3_MEDIA_BUCKET}.s3.{settings.AWS_REGION}.amazonaws.com/{object_key}",
+        "delivery_url": delivery_url,
+        "public_asset_url": delivery_url,
         "expires_in": 300,
     }
 
+
+def upload_file_to_media_bucket(
+    local_path: Path, object_key: str, content_type: str = "image/svg+xml"
+) -> str:
+    """Uploads a local product media file into the private S3 media bucket."""
+    if settings.USE_LOCAL_AWS:
+        ensure_media_bucket_exists()
+    s3 = get_s3_client()
+    normalized_key = object_key.lstrip("/")
+    s3.put_object(
+        Bucket=settings.S3_MEDIA_BUCKET,
+        Key=normalized_key,
+        Body=local_path.read_bytes(),
+        ContentType=content_type,
+    )
+    return normalized_key
+
+
+def delete_product_image(object_key: str) -> bool:
+    """Deletes a product image object from the private S3 media bucket."""
+    if not object_key:
+        return False
+    normalized_key = object_key.lstrip("/")
+    if normalized_key.startswith("media/"):
+        normalized_key = normalized_key[len("media/") :]
+    if settings.USE_LOCAL_AWS:
+        ensure_media_bucket_exists()
+    s3 = get_s3_client()
+    s3.delete_object(Bucket=settings.S3_MEDIA_BUCKET, Key=normalized_key)
+    return True

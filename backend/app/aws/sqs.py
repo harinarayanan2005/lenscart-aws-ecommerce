@@ -14,8 +14,13 @@ def get_sqs_client():
 
 
 def ensure_order_queue() -> str:
-    """Ensures the SQS Order Processing Queue (with 20s Long Polling for Free Tier efficiency) exists."""
+    """
+    Returns the configured SQS Order Queue URL in production, or ensures a local Moto
+    SQS queue (with 20s Long Polling for Free Tier efficiency) exists when USE_LOCAL_AWS=True.
+    """
     global _queue_url_cache
+    if not settings.USE_LOCAL_AWS and settings.SQS_ORDER_QUEUE_URL:
+        return settings.SQS_ORDER_QUEUE_URL
     if _queue_url_cache:
         return _queue_url_cache
 
@@ -24,7 +29,7 @@ def ensure_order_queue() -> str:
     resp = sqs.create_queue(
         QueueName=queue_name,
         Attributes={
-            "ReceiveMessageWaitTimeSeconds": "20",  # Long polling to minimize SQS API requests
+            "ReceiveMessageWaitTimeSeconds": "20",
             "VisibilityTimeout": "60",
         },
     )
@@ -67,4 +72,3 @@ def receive_order_messages(max_messages: int = 5) -> List[Dict[str, Any]]:
         MessageAttributeNames=["All"],
     )
     return resp.get("Messages", [])
-

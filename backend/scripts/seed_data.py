@@ -13,7 +13,7 @@ CATEGORIES_SEED = [
         "slug": "cameras",
         "name": "Cameras",
         "description": "Full-frame mirrorless, medium format, and cinema camera bodies.",
-        "hero_image": "https://images.unsplash.com/photo-1516035069371-29a1b244cc32?auto=format&fit=crop&w=900&q=80",
+        "hero_image": "product_media/cameras/sony-alpha-a7r-v-body-1.svg",
         "sort_order": 1,
         "spec_fields": [
             "sensor_type",
@@ -32,7 +32,7 @@ CATEGORIES_SEED = [
         "slug": "lenses",
         "name": "Camera Lenses",
         "description": "Precision prime, telephoto, macro, and cinema zoom optics.",
-        "hero_image": "https://images.unsplash.com/photo-1617005082133-548c4dd27f35?auto=format&fit=crop&w=900&q=80",
+        "hero_image": "product_media/cameras/sony-alpha-a7r-v-body-1.svg",
         "sort_order": 2,
         "spec_fields": [
             "lens_mount",
@@ -52,7 +52,7 @@ CATEGORIES_SEED = [
         "slug": "tripods",
         "name": "Tripods and Stabilizers",
         "description": "Carbon fiber tripods, fluid video heads, and 3-axis motorized gimbals.",
-        "hero_image": "https://images.unsplash.com/photo-1588702547919-26089e690ecc?auto=format&fit=crop&w=900&q=80",
+        "hero_image": "product_media/cameras/sony-alpha-a7r-v-body-1.svg",
         "sort_order": 3,
         "spec_fields": [
             "equipment_type",
@@ -70,7 +70,7 @@ CATEGORIES_SEED = [
         "slug": "lighting",
         "name": "Lighting Equipment",
         "description": "COB continuous LEDs, bi-color studio panels, and TTL monolights.",
-        "hero_image": "https://images.unsplash.com/photo-1526170375885-4d8ecf77b99f?auto=format&fit=crop&w=900&q=80",
+        "hero_image": "product_media/cameras/sony-alpha-a7r-v-body-1.svg",
         "sort_order": 4,
         "spec_fields": [
             "light_type",
@@ -88,7 +88,7 @@ CATEGORIES_SEED = [
         "slug": "audio",
         "name": "Audio Equipment",
         "description": "Shotgun microphones, dual-channel wireless lavaliers, and field recorders.",
-        "hero_image": "https://images.unsplash.com/photo-1590602847861-f357a9332bbc?auto=format&fit=crop&w=900&q=80",
+        "hero_image": "product_media/cameras/sony-alpha-a7r-v-body-1.svg",
         "sort_order": 5,
         "spec_fields": [
             "microphone_type",
@@ -103,7 +103,7 @@ CATEGORIES_SEED = [
         "slug": "accessories",
         "name": "Camera Accessories",
         "description": "Variable ND filters, cages, L-brackets, and high-capacity batteries.",
-        "hero_image": "https://images.unsplash.com/photo-1510127034890-ba27508e9f1c?auto=format&fit=crop&w=900&q=80",
+        "hero_image": "product_media/cameras/sony-alpha-a7r-v-body-1.svg",
         "sort_order": 6,
         "spec_fields": ["equipment_type", "material", "filter_thread_mm", "weight_grams"],
     },
@@ -112,7 +112,7 @@ CATEGORIES_SEED = [
         "slug": "storage",
         "name": "Memory Cards and Storage",
         "description": "CFexpress Type A/B cards, UHS-II SDXC media, and rugged NVMe SSDs.",
-        "hero_image": "https://images.unsplash.com/photo-1597872200969-2b65d56bd16b?auto=format&fit=crop&w=900&q=80",
+        "hero_image": "product_media/cameras/sony-alpha-a7r-v-body-1.svg",
         "sort_order": 7,
         "spec_fields": [
             "card_type",
@@ -127,7 +127,7 @@ CATEGORIES_SEED = [
         "slug": "bags",
         "name": "Camera Bags and Protection",
         "description": "Weatherproof backpacks, hard Pelican cases, and modular sling bags.",
-        "hero_image": "https://images.unsplash.com/photo-1553062407-98eeb64c6a62?auto=format&fit=crop&w=900&q=80",
+        "hero_image": "product_media/cameras/sony-alpha-a7r-v-body-1.svg",
         "sort_order": 8,
         "spec_fields": [
             "equipment_type",
@@ -158,8 +158,8 @@ PRODUCTS_SEED = [
         "price": 3898.00,
         "discount_percent": 5,
         "images": [
-            "https://images.unsplash.com/photo-1516035069371-29a1b244cc32?auto=format&fit=crop&w=1000&q=80",
-            "https://images.unsplash.com/photo-1502920917128-1aa500764cbd?auto=format&fit=crop&w=1000&q=80",
+            "product_media/cameras/sony-alpha-a7r-v-body-1.svg",
+            "product_media/cameras/sony-alpha-a7r-v-body-1.svg",
         ],
         "lens_mount": "Sony E",
         "specifications": {
@@ -208,7 +208,7 @@ PRODUCTS_SEED = [
         "price": 3898.00,
         "discount_percent": 0,
         "images": [
-            "https://images.unsplash.com/photo-1585647347384-2593bc35786b?auto=format&fit=crop&w=1000&q=80",
+            "product_media/cameras/sony-alpha-a7r-v-body-1.svg",
         ],
         "lens_mount": "Sony E",
         "specifications": {
@@ -256,8 +256,8 @@ PRODUCTS_SEED = [
         "price": 4299.00,
         "discount_percent": 0,
         "images": [
-            "https://images.unsplash.com/photo-1502920917128-1aa500764cbd?auto=format&fit=crop&w=1000&q=80",
-            "https://images.unsplash.com/photo-1516035069371-29a1b244cc32?auto=format&fit=crop&w=1000&q=80",
+            "product_media/cameras/sony-alpha-a7r-v-body-1.svg",
+            "product_media/cameras/sony-alpha-a7r-v-body-1.svg",
         ],
         "lens_mount": "Canon RF",
         "specifications": {
@@ -304,7 +304,7 @@ PRODUCTS_SEED = [
         "price": 3996.95,
         "discount_percent": 8,
         "images": [
-            "https://images.unsplash.com/photo-1512790182412-b19e6d62bc39?auto=format&fit=crop&w=1000&q=80",
+            "product_media/cameras/sony-alpha-a7r-v-body-1.svg",
         ],
         "lens_mount": "Nikon Z",
         "specifications": {
@@ -350,7 +350,7 @@ PRODUCTS_SEED = [
         "price": 1699.00,
         "discount_percent": 0,
         "images": [
-            "https://images.unsplash.com/photo-1526170375885-4d8ecf77b99f?auto=format&fit=crop&w=1000&q=80",
+            "product_media/cameras/sony-alpha-a7r-v-body-1.svg",
         ],
         "lens_mount": "Fujifilm X",
         "specifications": {
@@ -392,7 +392,7 @@ PRODUCTS_SEED = [
         "price": 6995.00,
         "discount_percent": 0,
         "images": [
-            "https://images.unsplash.com/photo-1516961642265-531546e84af2?auto=format&fit=crop&w=1000&q=80",
+            "product_media/cameras/sony-alpha-a7r-v-body-1.svg",
         ],
         "lens_mount": "L-Mount",
         "specifications": {
@@ -438,7 +438,7 @@ PRODUCTS_SEED = [
         "price": 2298.00,
         "discount_percent": 4,
         "images": [
-            "https://images.unsplash.com/photo-1617005082133-548c4dd27f35?auto=format&fit=crop&w=1000&q=80",
+            "product_media/cameras/sony-alpha-a7r-v-body-1.svg",
         ],
         "lens_mount": "Sony E",
         "specifications": {
@@ -480,7 +480,7 @@ PRODUCTS_SEED = [
         "price": 1998.00,
         "discount_percent": 5,
         "images": [
-            "https://images.unsplash.com/photo-1516724562728-afc824a36e84?auto=format&fit=crop&w=1000&q=80",
+            "product_media/cameras/sony-alpha-a7r-v-body-1.svg",
         ],
         "lens_mount": "Sony E",
         "specifications": {
@@ -522,7 +522,7 @@ PRODUCTS_SEED = [
         "price": 1199.00,
         "discount_percent": 10,
         "images": [
-            "https://images.unsplash.com/photo-1516724562728-afc824a36e84?auto=format&fit=crop&w=1000&q=80",
+            "product_media/cameras/sony-alpha-a7r-v-body-1.svg",
         ],
         "lens_mount": "Sony E",
         "specifications": {
@@ -564,7 +564,7 @@ PRODUCTS_SEED = [
         "price": 3099.00,
         "discount_percent": 5,
         "images": [
-            "https://images.unsplash.com/photo-1617005082133-548c4dd27f35?auto=format&fit=crop&w=1000&q=80",
+            "product_media/cameras/sony-alpha-a7r-v-body-1.svg",
         ],
         "lens_mount": "Canon RF",
         "specifications": {
@@ -606,7 +606,7 @@ PRODUCTS_SEED = [
         "price": 2799.00,
         "discount_percent": 7,
         "images": [
-            "https://images.unsplash.com/photo-1516724562728-afc824a36e84?auto=format&fit=crop&w=1000&q=80",
+            "product_media/cameras/sony-alpha-a7r-v-body-1.svg",
         ],
         "lens_mount": "Canon RF",
         "specifications": {
@@ -648,7 +648,7 @@ PRODUCTS_SEED = [
         "price": 2696.95,
         "discount_percent": 7,
         "images": [
-            "https://images.unsplash.com/photo-1516724562728-afc824a36e84?auto=format&fit=crop&w=1000&q=80",
+            "product_media/cameras/sony-alpha-a7r-v-body-1.svg",
         ],
         "lens_mount": "Nikon Z",
         "specifications": {
@@ -690,7 +690,7 @@ PRODUCTS_SEED = [
         "price": 2096.95,
         "discount_percent": 5,
         "images": [
-            "https://images.unsplash.com/photo-1617005082133-548c4dd27f35?auto=format&fit=crop&w=1000&q=80",
+            "product_media/cameras/sony-alpha-a7r-v-body-1.svg",
         ],
         "lens_mount": "Nikon Z",
         "specifications": {
@@ -732,7 +732,7 @@ PRODUCTS_SEED = [
         "price": 799.00,
         "discount_percent": 0,
         "images": [
-            "https://images.unsplash.com/photo-1617005082133-548c4dd27f35?auto=format&fit=crop&w=1000&q=80",
+            "product_media/cameras/sony-alpha-a7r-v-body-1.svg",
         ],
         "lens_mount": "Fujifilm X",
         "specifications": {
@@ -774,7 +774,7 @@ PRODUCTS_SEED = [
         "price": 1199.00,
         "discount_percent": 0,
         "images": [
-            "https://images.unsplash.com/photo-1516724562728-afc824a36e84?auto=format&fit=crop&w=1000&q=80",
+            "product_media/cameras/sony-alpha-a7r-v-body-1.svg",
         ],
         "lens_mount": "Fujifilm X",
         "specifications": {
@@ -816,7 +816,7 @@ PRODUCTS_SEED = [
         "price": 5095.00,
         "discount_percent": 0,
         "images": [
-            "https://images.unsplash.com/photo-1617005082133-548c4dd27f35?auto=format&fit=crop&w=1000&q=80",
+            "product_media/cameras/sony-alpha-a7r-v-body-1.svg",
         ],
         "lens_mount": "L-Mount",
         "specifications": {
@@ -862,7 +862,7 @@ PRODUCTS_SEED = [
         "price": 649.95,
         "discount_percent": 10,
         "images": [
-            "https://images.unsplash.com/photo-1588702547919-26089e690ecc?auto=format&fit=crop&w=1000&q=80",
+            "product_media/cameras/sony-alpha-a7r-v-body-1.svg",
         ],
         "lens_mount": "Universal",
         "specifications": {
@@ -902,7 +902,7 @@ PRODUCTS_SEED = [
         "price": 869.00,
         "discount_percent": 0,
         "images": [
-            "https://images.unsplash.com/photo-1588702547919-26089e690ecc?auto=format&fit=crop&w=1000&q=80",
+            "product_media/cameras/sony-alpha-a7r-v-body-1.svg",
         ],
         "lens_mount": "Universal",
         "specifications": {
@@ -942,7 +942,7 @@ PRODUCTS_SEED = [
         "price": 1349.00,
         "discount_percent": 8,
         "images": [
-            "https://images.unsplash.com/photo-1588702547919-26089e690ecc?auto=format&fit=crop&w=1000&q=80",
+            "product_media/cameras/sony-alpha-a7r-v-body-1.svg",
         ],
         "lens_mount": "Universal",
         "specifications": {
@@ -977,12 +977,12 @@ PRODUCTS_SEED = [
         "category_id": "CAT#tripods",
         "category_slug": "tripods",
         "category_name": "Tripods and Stabilizers",
-        "short_description": "Nitrogen piston continuous counterbalance (0–8 kg) fluid cinema head with twin-leg carbon fiber sticks.",
+        "short_description": "Nitrogen piston continuous counterbalance (0â€“8 kg) fluid cinema head with twin-leg carbon fiber sticks.",
         "description": "Provides butter-smooth pan and tilt drag with stepless nitrogen piston counterbalance for cinema cameras, matte boxes, and external monitor rigs.",
         "price": 1299.95,
         "discount_percent": 10,
         "images": [
-            "https://images.unsplash.com/photo-1588702547919-26089e690ecc?auto=format&fit=crop&w=1000&q=80",
+            "product_media/cameras/sony-alpha-a7r-v-body-1.svg",
         ],
         "lens_mount": "Universal",
         "specifications": {
@@ -1026,13 +1026,13 @@ PRODUCTS_SEED = [
         "price": 1890.00,
         "discount_percent": 12,
         "images": [
-            "https://images.unsplash.com/photo-1526170375885-4d8ecf77b99f?auto=format&fit=crop&w=1000&q=80",
+            "product_media/cameras/sony-alpha-a7r-v-body-1.svg",
         ],
         "lens_mount": "Universal",
         "specifications": {
             "light_type": "Daylight COB Point-Source LED",
             "power_output_watts": 600,
-            "color_temperature_kelvin": "5600K ± 200K",
+            "color_temperature_kelvin": "5600K Â± 200K",
             "cri_rating": 96,
             "tlci_rating": 96,
             "mount_type": "Bowens S-Mount",
@@ -1061,18 +1061,18 @@ PRODUCTS_SEED = [
         "category_id": "CAT#lighting",
         "category_slug": "lighting",
         "category_name": "Lighting Equipment",
-        "short_description": "400Ws battery-powered TTL monolight with 1/8000s High-Speed Sync, 0.01–1s recycle time, and 30W LED modeling lamp.",
+        "short_description": "400Ws battery-powered TTL monolight with 1/8000s High-Speed Sync, 0.01â€“1s recycle time, and 30W LED modeling lamp.",
         "description": "Compatible with Sony, Canon, Nikon, and Fujifilm TTL systems via built-in 2.4GHz Wireless X receiver, delivering 390 full-power flashes per charge.",
         "price": 649.00,
         "discount_percent": 0,
         "images": [
-            "https://images.unsplash.com/photo-1526170375885-4d8ecf77b99f?auto=format&fit=crop&w=1000&q=80",
+            "product_media/cameras/sony-alpha-a7r-v-body-1.svg",
         ],
         "lens_mount": "Universal",
         "specifications": {
             "light_type": "Battery TTL Strobe Monolight",
             "power_output_watts": 400,
-            "color_temperature_kelvin": "5600K ± 75K (Stable Color Mode)",
+            "color_temperature_kelvin": "5600K Â± 75K (Stable Color Mode)",
             "cri_rating": 96,
             "tlci_rating": 95,
             "mount_type": "Godox + Included Bowens Adapter",
@@ -1101,18 +1101,18 @@ PRODUCTS_SEED = [
         "category_id": "CAT#lighting",
         "category_slug": "lighting",
         "category_name": "Lighting Equipment",
-        "short_description": "300W bi-color COB LED (2700K–6500K) with +/- 80 Green/Magenta shift adjustment and Bowens mount.",
+        "short_description": "300W bi-color COB LED (2700Kâ€“6500K) with +/- 80 Green/Magenta shift adjustment and Bowens mount.",
         "description": "Features Nanlite's W(RG)WW light-mixing chamber for consistent output across the entire Kelvin range and +/- 80 G/M tint matching for mixed on-set lighting.",
         "price": 1049.00,
         "discount_percent": 6,
         "images": [
-            "https://images.unsplash.com/photo-1526170375885-4d8ecf77b99f?auto=format&fit=crop&w=1000&q=80",
+            "product_media/cameras/sony-alpha-a7r-v-body-1.svg",
         ],
         "lens_mount": "Universal",
         "specifications": {
             "light_type": "Bi-Color COB Continuous LED",
             "power_output_watts": 300,
-            "color_temperature_kelvin": "2700K - 6500K (G/M ±80)",
+            "color_temperature_kelvin": "2700K - 6500K (G/M Â±80)",
             "cri_rating": 96,
             "tlci_rating": 97,
             "mount_type": "Bowens S-Mount",
@@ -1120,7 +1120,7 @@ PRODUCTS_SEED = [
             "weight_grams": 2880,
         },
         "warranty_info": "2-Year Nanlite USA Warranty",
-        "in_the_box": ["Forza 300B II Head", "Control Unit", "55° Reflector", "Super Clamp", "Padded Case"],
+        "in_the_box": ["Forza 300B II Head", "Control Unit", "55Â° Reflector", "Super Clamp", "Padded Case"],
         "compatible_product_ids": [],
         "rating_avg": 4.8,
         "review_count": 14,
@@ -1146,7 +1146,7 @@ PRODUCTS_SEED = [
         "price": 2295.00,
         "discount_percent": 5,
         "images": [
-            "https://images.unsplash.com/photo-1526170375885-4d8ecf77b99f?auto=format&fit=crop&w=1000&q=80",
+            "product_media/cameras/sony-alpha-a7r-v-body-1.svg",
         ],
         "lens_mount": "Universal",
         "specifications": {
@@ -1190,7 +1190,7 @@ PRODUCTS_SEED = [
         "price": 399.00,
         "discount_percent": 5,
         "images": [
-            "https://images.unsplash.com/photo-1590602847861-f357a9332bbc?auto=format&fit=crop&w=1000&q=80",
+            "product_media/cameras/sony-alpha-a7r-v-body-1.svg",
         ],
         "lens_mount": "Universal",
         "specifications": {
@@ -1227,7 +1227,7 @@ PRODUCTS_SEED = [
         "price": 999.00,
         "discount_percent": 10,
         "images": [
-            "https://images.unsplash.com/photo-1590602847861-f357a9332bbc?auto=format&fit=crop&w=1000&q=80",
+            "product_media/cameras/sony-alpha-a7r-v-body-1.svg",
         ],
         "lens_mount": "Universal",
         "specifications": {
@@ -1264,14 +1264,14 @@ PRODUCTS_SEED = [
         "price": 699.99,
         "discount_percent": 0,
         "images": [
-            "https://images.unsplash.com/photo-1590602847861-f357a9332bbc?auto=format&fit=crop&w=1000&q=80",
+            "product_media/cameras/sony-alpha-a7r-v-body-1.svg",
         ],
         "lens_mount": "Universal",
         "specifications": {
             "microphone_type": "6-Preamp 14-Track Location Field Recorder",
-            "polar_pattern": "N/A (6× Balanced XLR Inputs)",
+            "polar_pattern": "N/A (6Ã— Balanced XLR Inputs)",
             "frequency_response": "10 Hz - 80 kHz (192 kHz Sample Rate)",
-            "connectivity": "6× XLR + 3.5mm Stereo Out + BNC Timecode + USB-C",
+            "connectivity": "6Ã— XLR + 3.5mm Stereo Out + BNC Timecode + USB-C",
             "weight_grams": 520,
         },
         "warranty_info": "1-Year Zoom North America Pro Warranty",
@@ -1305,7 +1305,7 @@ PRODUCTS_SEED = [
         "price": 249.99,
         "discount_percent": 0,
         "images": [
-            "https://images.unsplash.com/photo-1510127034890-ba27508e9f1c?auto=format&fit=crop&w=1000&q=80",
+            "product_media/cameras/sony-alpha-a7r-v-body-1.svg",
         ],
         "lens_mount": "Universal",
         "specifications": {
@@ -1341,7 +1341,7 @@ PRODUCTS_SEED = [
         "price": 139.00,
         "discount_percent": 10,
         "images": [
-            "https://images.unsplash.com/photo-1510127034890-ba27508e9f1c?auto=format&fit=crop&w=1000&q=80",
+            "product_media/cameras/sony-alpha-a7r-v-body-1.svg",
         ],
         "lens_mount": "Sony E",
         "specifications": {
@@ -1377,7 +1377,7 @@ PRODUCTS_SEED = [
         "price": 154.95,
         "discount_percent": 0,
         "images": [
-            "https://images.unsplash.com/photo-1510127034890-ba27508e9f1c?auto=format&fit=crop&w=1000&q=80",
+            "product_media/cameras/sony-alpha-a7r-v-body-1.svg",
         ],
         "lens_mount": "Universal",
         "specifications": {
@@ -1417,7 +1417,7 @@ PRODUCTS_SEED = [
         "price": 348.00,
         "discount_percent": 15,
         "images": [
-            "https://images.unsplash.com/photo-1597872200969-2b65d56bd16b?auto=format&fit=crop&w=1000&q=80",
+            "product_media/cameras/sony-alpha-a7r-v-body-1.svg",
         ],
         "lens_mount": "Sony E",
         "specifications": {
@@ -1454,7 +1454,7 @@ PRODUCTS_SEED = [
         "price": 249.99,
         "discount_percent": 10,
         "images": [
-            "https://images.unsplash.com/photo-1597872200969-2b65d56bd16b?auto=format&fit=crop&w=1000&q=80",
+            "product_media/cameras/sony-alpha-a7r-v-body-1.svg",
         ],
         "lens_mount": "Universal",
         "specifications": {
@@ -1491,7 +1491,7 @@ PRODUCTS_SEED = [
         "price": 399.99,
         "discount_percent": 12,
         "images": [
-            "https://images.unsplash.com/photo-1597872200969-2b65d56bd16b?auto=format&fit=crop&w=1000&q=80",
+            "product_media/cameras/sony-alpha-a7r-v-body-1.svg",
         ],
         "lens_mount": "Universal",
         "specifications": {
@@ -1532,7 +1532,7 @@ PRODUCTS_SEED = [
         "price": 299.95,
         "discount_percent": 0,
         "images": [
-            "https://images.unsplash.com/photo-1553062407-98eeb64c6a62?auto=format&fit=crop&w=1000&q=80",
+            "product_media/cameras/sony-alpha-a7r-v-body-1.svg",
         ],
         "lens_mount": "Universal",
         "specifications": {
@@ -1570,7 +1570,7 @@ PRODUCTS_SEED = [
         "price": 429.95,
         "discount_percent": 8,
         "images": [
-            "https://images.unsplash.com/photo-1553062407-98eeb64c6a62?auto=format&fit=crop&w=1000&q=80",
+            "product_media/cameras/sony-alpha-a7r-v-body-1.svg",
         ],
         "lens_mount": "Universal",
         "specifications": {
@@ -1608,7 +1608,7 @@ PRODUCTS_SEED = [
         "price": 379.95,
         "discount_percent": 0,
         "images": [
-            "https://images.unsplash.com/photo-1553062407-98eeb64c6a62?auto=format&fit=crop&w=1000&q=80",
+            "product_media/cameras/sony-alpha-a7r-v-body-1.svg",
         ],
         "lens_mount": "Universal",
         "specifications": {
@@ -1635,8 +1635,29 @@ PRODUCTS_SEED = [
 ]
 
 
+def _normalize_seed_media_keys() -> None:
+    """Replaces any external URLs in CATEGORIES_SEED and PRODUCTS_SEED with S3 object keys in product_media/."""
+    from scripts.upload_product_images import get_category_s3_key, get_product_s3_keys
+
+    for c in CATEGORIES_SEED:
+        s3_key = get_category_s3_key(c)
+        c["hero_image"] = s3_key
+        c["image"] = s3_key
+
+    for p in PRODUCTS_SEED:
+        s3_keys = get_product_s3_keys(p)
+        p["images"] = s3_keys
+        p["thumbnail_image"] = s3_keys[0]
+
+
+_normalize_seed_media_keys()
+
+
 def seed_initial_data() -> None:
     """Idempotently seeds categories, photography equipment, inventory, reviews, addresses, and orders."""
+    from scripts.upload_product_images import ensure_local_product_media_files
+
+    ensure_local_product_media_files(CATEGORIES_SEED, PRODUCTS_SEED)
     ensure_tables_exist()
     cat_repo = CategoryRepository()
     prod_repo = ProductRepository()
@@ -1728,6 +1749,52 @@ def seed_initial_data() -> None:
             "is_default": True,
         },
     )
+    aarav_addr_1 = addr_repo.create_address(
+        "usr-6ebc1a4136fc",
+        {
+            "address_id": "ADDR#aarav-studio",
+            "full_name": "Aarav Mehta",
+            "phone": "+91 98201 44580",
+            "line1": "Studio 14, Maker Maxity, Bandra Kurla Complex",
+            "line2": "Commercial Production Wing B",
+            "city": "Mumbai",
+            "state": "Maharashtra",
+            "postal_code": "400051",
+            "country": "India",
+            "is_default": True,
+        },
+    )
+    aarav_addr_2 = addr_repo.create_address(
+        "usr-6ebc1a4136fc",
+        {
+            "address_id": "ADDR#aarav-home",
+            "full_name": "Aarav Mehta (Residence)",
+            "phone": "+91 98201 44580",
+            "line1": "402 Sea Breeze Apartments, Worli Sea Face",
+            "line2": "Near Worli Promenade",
+            "city": "Mumbai",
+            "state": "Maharashtra",
+            "postal_code": "400030",
+            "country": "India",
+            "is_default": False,
+        },
+    )
+    rev_repo.create_review(
+        product_id="PROD#cam-sony-a7rv",
+        user_sub="usr-6ebc1a4136fc",
+        user_name="Aarav Mehta",
+        rating=5,
+        title="Incredible commercial studio workhorse",
+        comment="Ordered this for our Mumbai production studio. Fast delivery, genuine sealed packaging, and razor-sharp optical performance.",
+    )
+    rev_repo.create_review(
+        product_id="PROD#tripod-pd-carbon",
+        user_sub="usr-6ebc1a4136fc",
+        user_name="Aarav Mehta",
+        rating=5,
+        title="Rock-solid stability on location shoots",
+        comment="Zero flex even with a heavy cinema rig mounted. Folds down compactly into our gear case.",
+    )
 
     # Seed realistic historical orders for analytics & tracking
     sample_orders = [
@@ -1742,7 +1809,7 @@ def seed_initial_data() -> None:
                     "sku": "SNY-ILCE7RM5",
                     "name": "Sony Alpha a7R V Mirrorless Camera Body",
                     "brand": "Sony",
-                    "image": "https://images.unsplash.com/photo-1516035069371-29a1b244cc32?auto=format&fit=crop&w=1000&q=80",
+                    "image": "product_media/cameras/sony-alpha-a7r-v-body-1.jpg",
                     "quantity": 1,
                     "unit_price": 3898.00,
                     "discount_percent": 5,
@@ -1754,7 +1821,7 @@ def seed_initial_data() -> None:
                     "sku": "SNY-SEL2470GM2",
                     "name": "Sony FE 24-70mm f/2.8 GM II Lens",
                     "brand": "Sony",
-                    "image": "https://images.unsplash.com/photo-1617005082133-548c4dd27f35?auto=format&fit=crop&w=1000&q=80",
+                    "image": "product_media/lenses/sony-fe-24-70mm-f28-gm-ii-1.jpg",
                     "quantity": 1,
                     "unit_price": 2298.00,
                     "discount_percent": 4,
@@ -1811,7 +1878,7 @@ def seed_initial_data() -> None:
                     "sku": "PKD-TRPCF1",
                     "name": "Peak Design Travel Tripod (Carbon Fiber)",
                     "brand": "Peak Design",
-                    "image": "https://images.unsplash.com/photo-1588702547919-26089e690ecc?auto=format&fit=crop&w=1000&q=80",
+                    "image": "product_media/tripods/peak-design-travel-tripod-carbon-fiber-1.jpg",
                     "quantity": 1,
                     "unit_price": 649.95,
                     "discount_percent": 10,
@@ -1851,6 +1918,171 @@ def seed_initial_data() -> None:
                 },
             ],
         },
+        {
+            "order_id": "ORD#LC-2026-11FD0C",
+            "user_id": "USER#usr-6ebc1a4136fc",
+            "customer_name": "Aarav Mehta",
+            "customer_email": "aarav.mehta@lenscart.com",
+            "items": [
+                {
+                    "product_id": "PROD#cam-sony-a7rv",
+                    "sku": "SNY-ILCE7RM5",
+                    "name": "Sony Alpha a7R V Mirrorless Camera Body",
+                    "brand": "Sony",
+                    "image": "product_media/cameras/sony-alpha-a7r-v-body-1.jpg",
+                    "quantity": 1,
+                    "unit_price": 3898.00,
+                    "discount_percent": 5,
+                    "final_unit_price": 3703.10,
+                    "line_total": 3703.10,
+                },
+                {
+                    "product_id": "PROD#lens-sony-2470gm2",
+                    "sku": "SNY-SEL2470GM2",
+                    "name": "Sony FE 24-70mm f/2.8 GM II Lens",
+                    "brand": "Sony",
+                    "image": "product_media/lenses/sony-fe-24-70mm-f28-gm-ii-1.jpg",
+                    "quantity": 1,
+                    "unit_price": 2298.00,
+                    "discount_percent": 4,
+                    "final_unit_price": 2206.08,
+                    "line_total": 2206.08,
+                },
+            ],
+            "shipping_address": aarav_addr_1,
+            "subtotal": 6196.00,
+            "discount_total": 286.82,
+            "shipping_fee": 0.00,
+            "tax_amount": 472.73,
+            "final_total": 6381.91,
+            "order_status": "Processing",
+            "payment_method": "SIMULATED_CARD",
+            "payment_status": "PAID_SIMULATED",
+            "payment_reference": "SIM-PAY-AARAV1",
+            "created_at": (now - timedelta(hours=2)).isoformat(),
+            "timeline": [
+                {
+                    "status": "Placed",
+                    "timestamp": (now - timedelta(hours=2)).isoformat(),
+                    "note": "Order placed with simulated payment (SIMULATED_CARD) and stock reserved.",
+                    "actor": "Aarav Mehta",
+                },
+                {
+                    "status": "Confirmed",
+                    "timestamp": (now - timedelta(hours=1, minutes=58)).isoformat(),
+                    "note": "Order confirmed by SQS asynchronous worker.",
+                    "actor": "SQS Order Worker",
+                },
+                {
+                    "status": "Processing",
+                    "timestamp": (now - timedelta(hours=1)).isoformat(),
+                    "note": "Optical quality inspection completed at Mumbai fulfillment hub",
+                    "actor": "Marcus Sterling (Chief Curator)",
+                },
+            ],
+        },
+        {
+            "order_id": "ORD#LC-2026-BBCD17",
+            "user_id": "USER#usr-6ebc1a4136fc",
+            "customer_name": "Aarav Mehta",
+            "customer_email": "aarav.mehta@lenscart.com",
+            "items": [
+                {
+                    "product_id": "PROD#cam-canon-r5mk2",
+                    "sku": "CAN-EOSR5M2",
+                    "name": "Canon EOS R5 Mark II Mirrorless Camera Body",
+                    "brand": "Canon",
+                    "image": "product_media/cameras/canon-eos-r5-mark-ii-body-1.jpg",
+                    "quantity": 1,
+                    "unit_price": 4299.00,
+                    "discount_percent": 5,
+                    "final_unit_price": 4084.05,
+                    "line_total": 4084.05,
+                },
+                {
+                    "product_id": "PROD#cam-nikon-z8",
+                    "sku": "NIK-Z8BODY",
+                    "name": "Nikon Z8 Full-Frame Mirrorless Camera Body",
+                    "brand": "Nikon",
+                    "image": "product_media/cameras/nikon-z8-mirrorless-camera-body-1.jpg",
+                    "quantity": 1,
+                    "unit_price": 3996.95,
+                    "discount_percent": 10,
+                    "final_unit_price": 3597.26,
+                    "line_total": 3597.26,
+                },
+            ],
+            "shipping_address": aarav_addr_1,
+            "subtotal": 8295.95,
+            "discount_total": 614.64,
+            "shipping_fee": 0.00,
+            "tax_amount": 628.43,
+            "final_total": 8309.74,
+            "order_status": "Confirmed",
+            "payment_method": "SIMULATED_UPI",
+            "payment_status": "PAID_SIMULATED",
+            "payment_reference": "SIM-PAY-AARAV2",
+            "created_at": (now - timedelta(hours=1)).isoformat(),
+            "timeline": [
+                {
+                    "status": "Placed",
+                    "timestamp": (now - timedelta(hours=1)).isoformat(),
+                    "note": "Order placed with simulated payment (SIMULATED_UPI) and stock reserved.",
+                    "actor": "Aarav Mehta",
+                },
+                {
+                    "status": "Confirmed",
+                    "timestamp": (now - timedelta(minutes=55)).isoformat(),
+                    "note": "Order confirmed by SQS asynchronous worker.",
+                    "actor": "SQS Order Worker",
+                },
+            ],
+        },
+        {
+            "order_id": "ORD#LC-2026-7915A1",
+            "user_id": "USER#usr-6ebc1a4136fc",
+            "customer_name": "Aarav Mehta",
+            "customer_email": "aarav.mehta@lenscart.com",
+            "items": [
+                {
+                    "product_id": "PROD#tripod-pd-carbon",
+                    "sku": "PKD-TRPCF1",
+                    "name": "Peak Design Travel Tripod (Carbon Fiber)",
+                    "brand": "Peak Design",
+                    "image": "product_media/tripods/peak-design-travel-tripod-carbon-fiber-1.jpg",
+                    "quantity": 1,
+                    "unit_price": 649.95,
+                    "discount_percent": 10,
+                    "final_unit_price": 584.96,
+                    "line_total": 584.96,
+                }
+            ],
+            "shipping_address": aarav_addr_2,
+            "subtotal": 649.95,
+            "discount_total": 64.99,
+            "shipping_fee": 0.00,
+            "tax_amount": 46.80,
+            "final_total": 631.76,
+            "order_status": "Cancelled",
+            "payment_method": "SIMULATED_NETBANKING",
+            "payment_status": "REFUNDED_SIMULATED",
+            "payment_reference": "SIM-PAY-AARAV3",
+            "created_at": (now - timedelta(minutes=30)).isoformat(),
+            "timeline": [
+                {
+                    "status": "Placed",
+                    "timestamp": (now - timedelta(minutes=30)).isoformat(),
+                    "note": "Order placed with simulated payment (SIMULATED_NETBANKING).",
+                    "actor": "Aarav Mehta",
+                },
+                {
+                    "status": "Cancelled",
+                    "timestamp": (now - timedelta(minutes=15)).isoformat(),
+                    "note": "Cancelled: Changed order to higher capacity CFexpress card. Reserved stock restored to inventory.",
+                    "actor": "Aarav Mehta",
+                },
+            ],
+        },
     ]
 
     for ord_item in sample_orders:
@@ -1859,3 +2091,10 @@ def seed_initial_data() -> None:
     logger.info(
         f"LensCart seed completed: 8 categories, {len(PRODUCTS_SEED)} products, inventory, reviews & sample orders."
     )
+
+
+if __name__ == "__main__":
+    seed_initial_data()
+    print("DynamoDB Seeding Complete: 8 categories, 36 products, inventory, reviews & sample orders.")
+
+

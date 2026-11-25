@@ -1,5 +1,6 @@
 from typing import Any, Dict, List, Optional
 from fastapi import status
+from app.aws.s3 import resolve_media_url
 from app.middleware.security import AppError
 from app.repositories.category_repo import CategoryRepository
 from app.repositories.inventory_repo import InventoryRepository
@@ -21,8 +22,17 @@ class CatalogService:
         threshold = int(stock.get("low_stock_threshold", 5)) if stock else 5
         price = float(product.get("price", 0))
         disc = float(product.get("discount_percent", 0))
+
+        raw_images: List[str] = list(product.get("images") or [])
+        resolved_images = [resolve_media_url(k) for k in raw_images if k]
+        raw_thumb = product.get("thumbnail_image") or (raw_images[0] if raw_images else "")
+        resolved_thumb = resolve_media_url(raw_thumb) if raw_thumb else ""
+
         return {
             **product,
+            "image_keys": raw_images,
+            "images": resolved_images if resolved_images else raw_images,
+            "thumbnail_image": resolved_thumb,
             "final_price": compute_final_price(price, disc),
             "available_qty": avail,
             "low_stock_threshold": threshold,
@@ -38,6 +48,8 @@ class CatalogService:
             counts[cid] = counts.get(cid, 0) + 1
         for c in categories:
             c["product_count"] = counts.get(c["category_id"], 0)
+            if c.get("image"):
+                c["image"] = resolve_media_url(c["image"])
         return categories
 
     def get_category_detail(self, category_id_or_slug: str) -> Dict[str, Any]:
@@ -50,6 +62,8 @@ class CatalogService:
                 f"Category '{category_id_or_slug}' not found.",
                 status.HTTP_404_NOT_FOUND,
             )
+        if cat.get("image"):
+            cat["image"] = resolve_media_url(cat["image"])
         products = self.prod_repo.query_by_category(cat["category_id"])
         enriched = [self.enrich_product_with_stock(p) for p in products]
         return {"category": cat, "products": enriched}
@@ -310,4 +324,3 @@ class CatalogService:
 
 
 catalog_service = CatalogService()
-

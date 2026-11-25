@@ -136,36 +136,38 @@ export const LoginPage: React.FC = () => {
               </button>
             </form>
 
-            {/* Quick Seeded Account Switcher for Evaluation */}
-            <div
-              className="mt-4 pt-3 border-top"
-              style={{ borderColor: 'var(--lc-border-color)' }}
-            >
+            {/* Quick Seeded Account Switcher for Local Evaluation Only */}
+            {(import.meta.env.DEV || import.meta.env.VITE_ENABLE_DEMO_ACCOUNTS === 'true') && (
               <div
-                className="small text-uppercase fw-semibold mb-2 text-center"
-                style={{ fontSize: '0.72rem', color: 'var(--lc-text-muted)', letterSpacing: '0.06em' }}
+                className="mt-4 pt-3 border-top"
+                style={{ borderColor: 'var(--lc-border-color)' }}
               >
-                Seeded Evaluation Accounts
-              </div>
-              <div className="d-flex gap-2">
-                <button
-                  type="button"
-                  className="lc-btn-outline w-50 small"
-                  style={{ fontSize: '0.8rem', padding: '0.45rem' }}
-                  onClick={() => fillDemoAccount('customer')}
+                <div
+                  className="small text-uppercase fw-semibold mb-2 text-center"
+                  style={{ fontSize: '0.72rem', color: 'var(--lc-text-muted)', letterSpacing: '0.06em' }}
                 >
-                  <User size={14} /> Customer Demo
-                </button>
-                <button
-                  type="button"
-                  className="lc-btn-outline w-50 small"
-                  style={{ fontSize: '0.8rem', padding: '0.45rem' }}
-                  onClick={() => fillDemoAccount('admin')}
-                >
-                  <ShieldCheck size={14} /> Admin Demo
-                </button>
+                  Seeded Local Evaluation Accounts
+                </div>
+                <div className="d-flex gap-2">
+                  <button
+                    type="button"
+                    className="lc-btn-outline w-50 small"
+                    style={{ fontSize: '0.8rem', padding: '0.45rem' }}
+                    onClick={() => fillDemoAccount('customer')}
+                  >
+                    <User size={14} /> Customer Demo
+                  </button>
+                  <button
+                    type="button"
+                    className="lc-btn-outline w-50 small"
+                    style={{ fontSize: '0.8rem', padding: '0.45rem' }}
+                    onClick={() => fillDemoAccount('admin')}
+                  >
+                    <ShieldCheck size={14} /> Admin Demo
+                  </button>
+                </div>
               </div>
-            </div>
+            )}
 
             <div className="text-center mt-4 small" style={{ color: 'var(--lc-text-secondary)' }}>
               New to LensCart?{' '}
@@ -184,6 +186,13 @@ export const RegisterPage: React.FC = () => {
   const dispatch = useAppDispatch();
   const navigate = useNavigate();
   const { loading, error } = useAppSelector((s) => s.auth);
+  const [pendingConfirmation, setPendingConfirmation] = useState<{
+    email: string;
+    password: string;
+  } | null>(null);
+  const [confirmationCode, setConfirmationCode] = useState('');
+  const [confirming, setConfirming] = useState(false);
+  const [confirmError, setConfirmError] = useState<string | null>(null);
 
   const {
     register,
@@ -202,6 +211,7 @@ export const RegisterPage: React.FC = () => {
 
   const onSubmit = async (values: RegisterFormValues) => {
     dispatch(clearAuthError());
+    setConfirmError(null);
     const result = await dispatch(
       registerUser({
         name: values.name,
@@ -211,13 +221,57 @@ export const RegisterPage: React.FC = () => {
       })
     );
     if (registerUser.fulfilled.match(result)) {
-      dispatch(
-        addToast({
-          type: 'success',
-          message: 'Account created and signed in via Cognito JWT.',
+      if (result.payload.requires_confirmation || !result.payload.access_token) {
+        setPendingConfirmation({ email: values.email, password: values.password });
+        dispatch(
+          addToast({
+            type: 'info',
+            message: `Verification code sent to ${values.email}. Please enter the 6-digit code below.`,
+          })
+        );
+      } else {
+        dispatch(
+          addToast({
+            type: 'success',
+            message: 'Account created and signed in via Cognito JWT.',
+          })
+        );
+        navigate('/');
+      }
+    }
+  };
+
+  const handleConfirmCode = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!pendingConfirmation || !confirmationCode.trim()) return;
+    setConfirming(true);
+    setConfirmError(null);
+    try {
+      await authApi.confirmSignup({
+        email: pendingConfirmation.email,
+        confirmation_code: confirmationCode.trim(),
+      });
+      const loginRes = await dispatch(
+        loginUser({
+          email: pendingConfirmation.email,
+          password: pendingConfirmation.password,
         })
       );
-      navigate('/');
+      if (loginUser.fulfilled.match(loginRes)) {
+        dispatch(
+          addToast({
+            type: 'success',
+            message: 'Email verified and signed in with Amazon Cognito!',
+          })
+        );
+        navigate('/');
+      } else {
+        navigate('/login');
+      }
+    } catch (err) {
+      setConfirmError(extractErrorMessage(err));
+    } finally {
+      setConfirming(false);
     }
   };
 
@@ -238,12 +292,54 @@ export const RegisterPage: React.FC = () => {
               </p>
             </div>
 
-            {error && (
+            {(error || confirmError) && (
               <div className="alert alert-danger py-2 small" role="alert">
-                {error}
+                {confirmError || error}
               </div>
             )}
 
+            {pendingConfirmation ? (
+              <form onSubmit={handleConfirmCode} noValidate>
+                <div className="mb-3">
+                  <label className="lc-label" htmlFor="confirm-email">
+                    Email Address
+                  </label>
+                  <input
+                    id="confirm-email"
+                    type="email"
+                    className="lc-input"
+                    value={pendingConfirmation.email}
+                    onChange={(e) =>
+                      setPendingConfirmation({ ...pendingConfirmation, email: e.target.value })
+                    }
+                    placeholder="your-email@example.com"
+                  />
+                </div>
+                <div className="mb-3">
+                  <label className="lc-label" htmlFor="confirm-code">
+                    6-Digit Cognito Verification Code (from your email)
+                  </label>
+                  <input
+                    id="confirm-code"
+                    type="text"
+                    className="lc-input lc-mono"
+                    placeholder="123456"
+                    value={confirmationCode}
+                    onChange={(e) => setConfirmationCode(e.target.value)}
+                  />
+                </div>
+                <button type="submit" className="lc-btn-primary w-100 mt-2" disabled={confirming}>
+                  {confirming ? 'Verifying Code...' : 'Verify Email & Sign In'}
+                </button>
+                <button
+                  type="button"
+                  className="lc-btn-outline w-100 mt-2 small"
+                  onClick={() => setPendingConfirmation(null)}
+                >
+                  Back to Registration Form
+                </button>
+              </form>
+            ) : (
             <form onSubmit={handleSubmit(onSubmit)} noValidate>
               <div className="row g-3">
                 <div className="col-12">
@@ -330,7 +426,15 @@ export const RegisterPage: React.FC = () => {
               <button type="submit" className="lc-btn-primary w-100 mt-4" disabled={loading}>
                 {loading ? 'Creating Account...' : 'Create Account'}
               </button>
+              <button
+                type="button"
+                className="lc-btn-outline w-100 mt-2 small"
+                onClick={() => setPendingConfirmation({ email: '', password: '' })}
+              >
+                Already have a 6-digit verification code? Enter Code Here
+              </button>
             </form>
+            )}
 
             <div className="text-center mt-4 small" style={{ color: 'var(--lc-text-secondary)' }}>
               Already have an account?{' '}

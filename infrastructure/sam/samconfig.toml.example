@@ -1,0 +1,13 @@
+# AWS SAM Configuration Example for LensCart (ap-south-1 Mumbai)
+# Copy to samconfig.toml only when ready for manual deployment.
+
+version = 0.1
+
+[default.deploy.parameters]
+stack_name = "lenscart-serverless-prod"
+region = "ap-south-1"
+capabilities = "CAPABILITY_IAM"
+confirm_changeset = true
+resolve_s3 = true
+parameter_overrides = "EnvironmentName=\"production\" TablePrefix=\"lenscart\""
+

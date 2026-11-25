@@ -59,8 +59,10 @@ export const registerUser = createAsyncThunk(
   ) => {
     try {
       const response = await authApi.register(payload);
-      localStorage.setItem(TOKEN_STORAGE_KEY, response.access_token);
-      localStorage.setItem(USER_STORAGE_KEY, JSON.stringify(response.user));
+      if (response.access_token && !response.requires_confirmation) {
+        localStorage.setItem(TOKEN_STORAGE_KEY, response.access_token);
+        localStorage.setItem(USER_STORAGE_KEY, JSON.stringify(response.user));
+      }
       return response;
     } catch (error) {
       return rejectWithValue(extractErrorMessage(error));
@@ -126,10 +128,12 @@ const authSlice = createSlice({
       })
       .addCase(registerUser.fulfilled, (state, action) => {
         state.loading = false;
-        state.user = action.payload.user;
-        state.token = action.payload.access_token;
-        state.isAuthenticated = true;
-        state.isAdmin = action.payload.user.roles.includes('Admin');
+        if (action.payload.access_token && !action.payload.requires_confirmation) {
+          state.user = action.payload.user;
+          state.token = action.payload.access_token;
+          state.isAuthenticated = true;
+          state.isAdmin = action.payload.user.roles.includes('Admin');
+        }
       })
       .addCase(registerUser.rejected, (state, action) => {
         state.loading = false;

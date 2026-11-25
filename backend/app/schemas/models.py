@@ -25,6 +25,15 @@ class RegisterRequest(BaseModel):
     phone: Optional[str] = Field(default=None, max_length=24)
 
 
+class ConfirmSignupRequest(BaseModel):
+    email: EmailAddress
+    confirmation_code: str = Field(..., min_length=4, max_length=12)
+
+
+class RefreshTokenRequest(BaseModel):
+    refresh_token: str = Field(..., min_length=8, max_length=2048)
+
+
 class ForgotPasswordRequest(BaseModel):
     email: EmailAddress
 
@@ -56,7 +65,7 @@ class AddressCreateRequest(BaseModel):
     city: str = Field(..., min_length=2, max_length=80)
     state: str = Field(..., min_length=2, max_length=80)
     postal_code: str = Field(..., min_length=4, max_length=20)
-    country: str = Field(default="United States", min_length=2, max_length=80)
+    country: str = Field(default="India", min_length=2, max_length=80)
     is_default: bool = False
 
 
@@ -92,6 +101,7 @@ class AdminProductCreateRequest(BaseModel):
     price: float = Field(..., gt=0, le=100000)
     discount_percent: float = Field(default=0, ge=0, le=80)
     images: List[str] = Field(..., min_length=1)
+    thumbnail_image: Optional[str] = None
     specifications: Dict[str, Any] = Field(default_factory=dict)
     warranty_info: str = Field(default="2-Year Authorized Manufacturer Warranty", max_length=300)
     in_the_box: List[str] = Field(default_factory=list)
@@ -118,6 +128,7 @@ class AdminProductUpdateRequest(BaseModel):
     price: Optional[float] = Field(default=None, gt=0, le=100000)
     discount_percent: Optional[float] = Field(default=None, ge=0, le=80)
     images: Optional[List[str]] = None
+    thumbnail_image: Optional[str] = None
     specifications: Optional[Dict[str, Any]] = None
     warranty_info: Optional[str] = None
     in_the_box: Optional[List[str]] = None
@@ -133,6 +144,11 @@ class PresignedUploadRequest(BaseModel):
     filename: str = Field(..., min_length=3, max_length=120)
     content_type: str = Field(..., min_length=5, max_length=50)
     file_size_bytes: int = Field(..., gt=0)
+    category_folder: str = Field(default="cameras", max_length=32)
+
+
+class ProductImageDeleteRequest(BaseModel):
+    object_key: str = Field(..., min_length=3, max_length=300)
 
 
 class AdminOrderStatusUpdateRequest(BaseModel):
@@ -150,4 +166,3 @@ class AdminStockAdjustRequest(BaseModel):
 
 class AdminCustomerStatusRequest(BaseModel):
     status: Literal["ACTIVE", "SUSPENDED"]
-

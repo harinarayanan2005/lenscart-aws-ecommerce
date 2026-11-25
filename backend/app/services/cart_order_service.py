@@ -1,12 +1,14 @@
 import hashlib
 import uuid
 from datetime import datetime, timezone
-from decimal import Decimal
 from typing import Any, Dict, List
 from fastapi import status
+from app.aws.cloudwatch import emit_metric
+from app.aws.s3 import resolve_media_url
 from app.aws.sns import publish_order_notification
 from app.aws.sqs import enqueue_order_event
-from app.handlers.sqs_worker import process_pending_sqs_orders
+from app.config import settings
+from app.lambda_handlers.order_worker import process_pending_sqs_orders
 from app.middleware.security import AppError
 from app.repositories.customer_repo import (
     AddressRepository,
@@ -60,13 +62,14 @@ class CartAndOrderService:
                 stock_warning = f"Only {avail} available in stock"
                 has_stock_issues = True
 
+            raw_img = (prod.get("images") or [""])[0]
             enriched_items.append(
                 {
                     "item_id": ci["item_id"],
                     "product_id": pid,
                     "name": prod["name"],
                     "brand": prod["brand"],
-                    "image": (prod.get("images") or [""])[0],
+                    "image": resolve_media_url(raw_img),
                     "category_name": prod.get("category_name", ""),
                     "unit_price": unit_price,
                     "discount_percent": discount_pct,
@@ -174,10 +177,20 @@ class CartAndOrderService:
         payment_method: str,
         idempotency_key: str,
     ) -> Dict[str, Any]:
+        """
+        Places a customer order with strict backend price calculation, conditional stock
+        reservation (with atomic rollback on partial failure), DynamoDB-backed idempotency,
+        and SQS asynchronous order processing.
+        """
         user_sub = user["sub"]
         idem_hash = hashlib.sha256(f"{user_sub}:{idempotency_key}".encode()).hexdigest()
-        if idem_hash in self._idempotency_map:
-            existing_ord = self.ord_repo.get_order_by_id(self._idempotency_map[idem_hash])
+
+        # Check both in-memory cache and DynamoDB idempotency lock record
+        cached_order_id = self._idempotency_map.get(idem_hash) or self.ord_repo.get_idempotent_order_id(
+            idem_hash
+        )
+        if cached_order_id:
+            existing_ord = self.ord_repo.get_order_by_id(cached_order_id)
             if existing_ord:
                 return existing_ord
 
@@ -255,6 +268,7 @@ class CartAndOrderService:
             "payment_method": payment_method,
             "payment_status": "PAID_SIMULATED",
             "payment_reference": f"SIM-PAY-{uuid.uuid4().hex[:6].upper()}",
+            "idempotency_hash": idem_hash,
             "timeline": [
                 {
                     "status": "Placed",
@@ -268,12 +282,16 @@ class CartAndOrderService:
         }
 
         created_order = self.ord_repo.create_order(order_payload)
-        self.cart_repo.clear_cart(user_sub)
+        self.ord_repo.save_idempotency_key(idem_hash, order_id)
         self._idempotency_map[idem_hash] = order_id
+        self.cart_repo.clear_cart(user_sub)
+        emit_metric("OrderPlaced", 1.0)
+        emit_metric("OrderRevenue", float(cart["final_total"]), unit="None")
 
         # Publish to SQS for asynchronous order confirmation & SNS notification
         enqueue_order_event("ORDER_CREATED", created_order, idem_hash)
-        process_pending_sqs_orders()
+        if settings.USE_LOCAL_AWS:
+            process_pending_sqs_orders()
 
         return self.ord_repo.get_order_by_id(order_id) or created_order
 
@@ -284,7 +302,8 @@ class CartAndOrderService:
         order = self.ord_repo.get_order_by_id(order_id)
         if not order:
             raise AppError("ORDER_NOT_FOUND", f"Order '{order_id}' not found.", status.HTTP_404_NOT_FOUND)
-        is_admin = "Admin" in user.get("roles", [])
+        roles_lower = {r.lower() for r in user.get("roles", [])}
+        is_admin = bool(roles_lower.intersection({"admin", "administrators", "administrator"}))
         if not is_admin and order.get("user_id") != f"USER#{user['sub']}":
             raise AppError(
                 "FORBIDDEN",
@@ -322,8 +341,8 @@ class CartAndOrderService:
             subject=f"LensCart Order Cancelled: {order_id}",
             payload={"order_id": order_id, "status": "Cancelled", "reason": reason},
         )
+        emit_metric("OrderCancelled", 1.0)
         return updated
 
 
 cart_order_service = CartAndOrderService()
-

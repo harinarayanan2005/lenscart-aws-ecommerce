@@ -1,0 +1,121 @@
+{
+  "Description": "Reference Least-Privilege IAM Policies for LensCart Serverless Functions in ap-south-1 (Mumbai)",
+  "Policies": {
+    "CoreApiLambdaPolicy": {
+      "Version": "2012-10-17",
+      "Statement": [
+        {
+          "Sid": "DynamoDBApplicationTablesCrud",
+          "Effect": "Allow",
+          "Action": [
+            "dynamodb:GetItem",
+            "dynamodb:PutItem",
+            "dynamodb:UpdateItem",
+            "dynamodb:DeleteItem",
+            "dynamodb:Query",
+            "dynamodb:BatchGetItem",
+            "dynamodb:BatchWriteItem",
+            "dynamodb:TransactWriteItems"
+          ],
+          "Resource": [
+            "arn:aws:dynamodb:ap-south-1:*:table/lenscart-*",
+            "arn:aws:dynamodb:ap-south-1:*:table/lenscart-*/index/*"
+          ]
+        },
+        {
+          "Sid": "PrivateProductMediaS3Access",
+          "Effect": "Allow",
+          "Action": [
+            "s3:GetObject",
+            "s3:PutObject",
+            "s3:DeleteObject"
+          ],
+          "Resource": "arn:aws:s3:::lenscart-product-media-*/*"
+        },
+        {
+          "Sid": "CognitoUserPoolGroupAndUserManagement",
+          "Effect": "Allow",
+          "Action": [
+            "cognito-idp:AdminAddUserToGroup",
+            "cognito-idp:AdminDisableUser",
+            "cognito-idp:AdminEnableUser",
+            "cognito-idp:ListUsers"
+          ],
+          "Resource": "arn:aws:cognito-idp:ap-south-1:*:userpool/*"
+        },
+        {
+          "Sid": "SqsOrderQueueSendMessage",
+          "Effect": "Allow",
+          "Action": ["sqs:SendMessage"],
+          "Resource": "arn:aws:sqs:ap-south-1:*:lenscart-order-queue"
+        },
+        {
+          "Sid": "SnsOrderEventsPublish",
+          "Effect": "Allow",
+          "Action": ["sns:Publish"],
+          "Resource": "arn:aws:sns:ap-south-1:*:lenscart-order-events"
+        }
+      ]
+    },
+    "OrderWorkerLambdaPolicy": {
+      "Version": "2012-10-17",
+      "Statement": [
+        {
+          "Sid": "SqsOrderQueueConsume",
+          "Effect": "Allow",
+          "Action": [
+            "sqs:ReceiveMessage",
+            "sqs:DeleteMessage",
+            "sqs:GetQueueAttributes"
+          ],
+          "Resource": "arn:aws:sqs:ap-south-1:*:lenscart-order-queue"
+        },
+        {
+          "Sid": "OrdersTableUpdateStatusAndIdempotency",
+          "Effect": "Allow",
+          "Action": [
+            "dynamodb:GetItem",
+            "dynamodb:PutItem",
+            "dynamodb:UpdateItem",
+            "dynamodb:Query"
+          ],
+          "Resource": [
+            "arn:aws:dynamodb:ap-south-1:*:table/lenscart-orders",
+            "arn:aws:dynamodb:ap-south-1:*:table/lenscart-orders/index/*"
+          ]
+        },
+        {
+          "Sid": "SnsOrderEventsPublish",
+          "Effect": "Allow",
+          "Action": ["sns:Publish"],
+          "Resource": "arn:aws:sns:ap-south-1:*:lenscart-order-events"
+        }
+      ]
+    },
+    "MaintenanceLambdaPolicy": {
+      "Version": "2012-10-17",
+      "Statement": [
+        {
+          "Sid": "ReadInventoryAndOrders",
+          "Effect": "Allow",
+          "Action": [
+            "dynamodb:GetItem",
+            "dynamodb:Query"
+          ],
+          "Resource": [
+            "arn:aws:dynamodb:ap-south-1:*:table/lenscart-inventory",
+            "arn:aws:dynamodb:ap-south-1:*:table/lenscart-inventory/index/*",
+            "arn:aws:dynamodb:ap-south-1:*:table/lenscart-orders",
+            "arn:aws:dynamodb:ap-south-1:*:table/lenscart-orders/index/*"
+          ]
+        },
+        {
+          "Sid": "SnsMaintenanceSummaryPublish",
+          "Effect": "Allow",
+          "Action": ["sns:Publish"],
+          "Resource": "arn:aws:sns:ap-south-1:*:lenscart-order-events"
+        }
+      ]
+    }
+  }
+}

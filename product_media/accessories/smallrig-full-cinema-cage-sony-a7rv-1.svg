@@ -1,0 +1,26 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="900" height="675" viewBox="0 0 800 600">
+  <defs>
+    <linearGradient id="bgGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#0f1217"/>
+      <stop offset="55%" stop-color="#171b23"/>
+      <stop offset="100%" stop-color="#0c0e12"/>
+    </linearGradient>
+    <radialGradient id="glowGrad" cx="50%" cy="44%" r="48%">
+      <stop offset="0%" stop-color="#c89d54" stop-opacity="0.20"/>
+      <stop offset="100%" stop-color="#c89d54" stop-opacity="0.0"/>
+    </radialGradient>
+  </defs>
+  <rect width="800" height="600" fill="url(#bgGrad)"/>
+  <circle cx="400" cy="260" r="260" fill="url(#glowGrad)"/>
+  <rect x="32" y="28" width="736" height="544" rx="18" fill="none" stroke="#262c38" stroke-width="1.5"/>
+  <text x="64" y="68" fill="#c89d54" font-family="system-ui, -apple-system, sans-serif" font-size="14" font-weight="700" letter-spacing="3">SMALLRIG // LENSCART AUTHORIZED MEDIA</text>
+  <text x="736" y="68" text-anchor="end" fill="#8b95a7" font-family="monospace" font-size="12" letter-spacing="1.5">STUDIO FRONT PROFILE</text>
+  
+        <rect x="265" y="145" width="270" height="235" rx="24" fill="#1a1f29" stroke="#c89d54" stroke-width="3"/>
+        <rect x="305" y="185" width="190" height="155" rx="14" fill="#12161e" stroke="#475569" stroke-width="2"/>
+        <circle cx="400" cy="262" r="46" fill="none" stroke="#c89d54" stroke-width="3" stroke-dasharray="10,6"/>
+        
+  <text x="400" y="472" text-anchor="middle" fill="#f8fafc" font-family="system-ui, -apple-system, sans-serif" font-size="22" font-weight="700">SmallRig Full Cinema Cage Kit for Sony Alpha a7R V / a7 IV</text>
+  <text x="400" y="504" text-anchor="middle" fill="#94a3b8" font-family="system-ui, -apple-system, sans-serif" font-size="14">SMR-3667B • Sony E • Form-fitting CNC aluminum cage with integrated </text>
+  <line x1="330" y1="530" x2="470" y2="530" stroke="#c89d54" stroke-width="2" stroke-opacity="0.6"/>
+</svg>

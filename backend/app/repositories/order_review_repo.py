@@ -1,6 +1,7 @@
 import uuid
 from datetime import datetime, timezone
 from typing import Any, Dict, List, Optional
+from botocore.exceptions import ClientError
 from boto3.dynamodb.conditions import Key
 from app.aws.dynamodb import get_table
 from app.utils.pricing import decimal_to_native, float_to_decimal
@@ -11,6 +12,8 @@ class OrderRepository:
     DynamoDB Repository for Orders (`lenscart-orders`).
     Uses GSI1 (`user_id` + `created_sort_key`), GSI2 (`order_status` + `created_sort_key`),
     and GSI3 (`all_orders_partition` + `created_sort_key`). Zero table scans.
+    Also stores DynamoDB-backed idempotency locks (`IDEMPOTENCY#{hash}`) so duplicate
+    checkout requests and redelivered SQS messages are safely deduplicated across Lambda invocations.
     """
 
     def create_order(self, order_data: Dict[str, Any]) -> Dict[str, Any]:
@@ -27,6 +30,51 @@ class OrderRepository:
         }
         table.put_item(Item=float_to_decimal(record))
         return decimal_to_native(record)
+
+    def get_idempotent_order_id(self, idem_hash: str) -> Optional[str]:
+        table = get_table("orders")
+        resp = table.get_item(
+            Key={"order_id": f"IDEMPOTENCY#{idem_hash}", "record_type": "LOCK"}
+        )
+        item = resp.get("Item")
+        return item.get("target_order_id") if item else None
+
+    def save_idempotency_key(self, idem_hash: str, target_order_id: str) -> None:
+        table = get_table("orders")
+        now = datetime.now(timezone.utc).isoformat()
+        table.put_item(
+            Item={
+                "order_id": f"IDEMPOTENCY#{idem_hash}",
+                "record_type": "LOCK",
+                "target_order_id": target_order_id,
+                "created_at": now,
+            }
+        )
+
+    def try_acquire_sqs_idempotency_lock(self, idem_key: str, order_id: str) -> bool:
+        """
+        Atomically records that an SQS order event with `idem_key` has been processed.
+        Returns True if this invocation acquired the lock, or False if already processed.
+        """
+        if not idem_key:
+            return True
+        table = get_table("orders")
+        now = datetime.now(timezone.utc).isoformat()
+        try:
+            table.put_item(
+                Item={
+                    "order_id": f"SQS_PROCESSED#{idem_key}",
+                    "record_type": "WORKER_LOCK",
+                    "target_order_id": order_id,
+                    "processed_at": now,
+                },
+                ConditionExpression="attribute_not_exists(order_id)",
+            )
+            return True
+        except ClientError as exc:
+            if exc.response["Error"]["Code"] == "ConditionalCheckFailedException":
+                return False
+            raise
 
     def get_order_by_id(self, order_id: str) -> Optional[Dict[str, Any]]:
         table = get_table("orders")
@@ -135,13 +183,11 @@ class ReviewRepository:
         table.put_item(Item=float_to_decimal(record))
         return decimal_to_native(record)
 
+    def delete_review(self, product_id: str, review_sort: str) -> bool:
+        table = get_table("reviews")
+        table.delete_item(Key={"product_id": product_id, "review_sort": review_sort})
+        return True
 
-category_repo = None
-product_repo = None
-inventory_repo = None
-cart_repo = None
-wishlist_repo = None
-address_repo = None
+
 order_repo = OrderRepository()
 review_repo = ReviewRepository()
-

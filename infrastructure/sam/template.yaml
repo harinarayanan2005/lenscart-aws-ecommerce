@@ -1,11 +1,12 @@
 AWSTemplateFormatVersion: '2010-09-09'
 Transform: AWS::Serverless-2016-10-31
 Description: >
-  LensCart Photography Equipment Store - 100% AWS Free Tier Serverless Architecture
-  (Lambda Function URLs, DynamoDB Always Free Provisioned Capacity, Cognito Lite Tier,
-  Private S3 + CloudFront OAC, SQS 20s Long Polling, SNS, EventBridge 24h Schedule,
-  3-Day CloudWatch Log Retention).
-  IMPORTANT: Do not deploy without explicit user approval.
+  LensCart Photography Equipment & Accessories Store - Production AWS Serverless Architecture
+  for ap-south-1 (Mumbai). Uses AWS Lambda Function URLs, DynamoDB Always Free Provisioned
+  Capacity (19 RCU / 19 WCU total), Amazon Cognito User Pools (customers & administrators),
+  Private S3 Buckets + CloudFront Origin Access Control (OAC), SQS + DLQ, SNS, EventBridge,
+  and 3-Day CloudWatch Log Retention.
+  IMPORTANT: Do NOT deploy without explicit user approval.
 
 Parameters:
   EnvironmentName:
@@ -30,17 +31,31 @@ Globals:
         APP_ENV: !Ref EnvironmentName
         USE_LOCAL_AWS: 'false'
         TABLE_PREFIX: !Ref TablePrefix
+        DYNAMODB_CATEGORIES_TABLE: !Ref CategoriesTable
+        DYNAMODB_PRODUCTS_TABLE: !Ref ProductsTable
+        DYNAMODB_INVENTORY_TABLE: !Ref InventoryTable
+        DYNAMODB_CARTS_TABLE: !Ref CartsTable
+        DYNAMODB_WISHLISTS_TABLE: !Ref WishlistsTable
+        DYNAMODB_ADDRESSES_TABLE: !Ref AddressesTable
+        DYNAMODB_ORDERS_TABLE: !Ref OrdersTable
+        DYNAMODB_REVIEWS_TABLE: !Ref ReviewsTable
         S3_MEDIA_BUCKET: !Ref ProductMediaBucket
+        S3_FRONTEND_BUCKET: !Ref FrontendAssetsBucket
+        COGNITO_USER_POOL_ID: !Ref LensCartUserPool
+        COGNITO_CLIENT_ID: !Ref LensCartUserPoolClient
         SQS_ORDER_QUEUE_URL: !Ref OrderProcessingQueue
-        SNS_ORDER_TOPIC_ARN: !Ref OrderEventsTopic
+        SNS_TOPIC_ARN: !Ref OrderEventsTopic
+        FRONTEND_ORIGIN: !Ref AllowedCorsOrigin
         CORS_ORIGINS: !Ref AllowedCorsOrigin
 
 Resources:
   # ---------------------------------------------------------------------------
-  # 1. AMAZON COGNITO USER POOL (Lite / Essentials Free Tier - 10,000 MAUs Free)
+  # 1. AMAZON COGNITO USER POOL (customers & administrators groups)
   # ---------------------------------------------------------------------------
   LensCartUserPool:
     Type: AWS::Cognito::UserPool
+    DeletionPolicy: Retain
+    UpdateReplacePolicy: Retain
     Properties:
       UserPoolName: !Sub '${TablePrefix}-user-pool'
       UsernameAttributes: [email]
@@ -64,35 +79,45 @@ Resources:
         - ALLOW_REFRESH_TOKEN_AUTH
         - ALLOW_USER_SRP_AUTH
 
-  CustomerUserGroup:
+  CustomersUserGroup:
     Type: AWS::Cognito::UserPoolGroup
     Properties:
-      GroupName: Customer
-      Description: Standard customer role for shopping, cart, wishlist, and order tracking
+      GroupName: customers
+      Description: Standard customer group for browsing, cart, wishlist, and order placement
       UserPoolId: !Ref LensCartUserPool
 
-  AdminUserGroup:
+  AdministratorsUserGroup:
     Type: AWS::Cognito::UserPoolGroup
     Properties:
-      GroupName: Admin
-      Description: Administrator role for catalog, inventory, order, and analytics management
+      GroupName: administrators
+      Description: Administrator group for catalog, inventory, order, customer, and analytics management
       UserPoolId: !Ref LensCartUserPool
 
   # ---------------------------------------------------------------------------
-  # 2. AMAZON S3 BUCKETS (Private Frontend & Private Media + CloudFront OAC)
+  # 2. AMAZON S3 PRIVATE BUCKETS + CLOUDFRONT ORIGIN ACCESS CONTROL (OAC)
   # ---------------------------------------------------------------------------
   FrontendAssetsBucket:
     Type: AWS::S3::Bucket
+    DeletionPolicy: Retain
+    UpdateReplacePolicy: Retain
     Properties:
+      BucketName: !Sub '${TablePrefix}-tier1-frontend-website-${AWS::AccountId}'
       PublicAccessBlockConfiguration:
         BlockPublicAcls: true
         BlockPublicPolicy: true
         IgnorePublicAcls: true
         RestrictPublicBuckets: true
+      Tags:
+        - { Key: Project, Value: LensCart }
+        - { Key: ArchitectureTier, Value: Tier-1-Presentation }
+        - { Key: Purpose, Value: React-Vite-Frontend-Website-Files }
 
   ProductMediaBucket:
     Type: AWS::S3::Bucket
+    DeletionPolicy: Retain
+    UpdateReplacePolicy: Retain
     Properties:
+      BucketName: !Sub '${TablePrefix}-tier1-product-images-${AWS::AccountId}'
       PublicAccessBlockConfiguration:
         BlockPublicAcls: true
         BlockPublicPolicy: true
@@ -104,12 +129,17 @@ Resources:
             AllowedMethods: [PUT, GET, HEAD]
             AllowedOrigins: [!Ref AllowedCorsOrigin]
             MaxAge: 3000
+      Tags:
+        - { Key: Project, Value: LensCart }
+        - { Key: ArchitectureTier, Value: Tier-1-Presentation }
+        - { Key: Purpose, Value: Product-Photography-Images-S3-Storage }
 
   CloudFrontOriginAccessControl:
     Type: AWS::CloudFront::OriginAccessControl
     Properties:
       OriginAccessControlConfig:
         Name: !Sub '${TablePrefix}-oac'
+        Description: 'LensCart [Tier-1 Presentation]: Origin Access Control securing private S3 buckets for CloudFront'
         OriginAccessControlOriginType: s3
         SigningBehavior: always
         SigningProtocol: sigv4
@@ -118,13 +148,19 @@ Resources:
     Type: AWS::CloudFront::Distribution
     Properties:
       DistributionConfig:
+        Comment: 'LensCart [Tier-1 Presentation]: HTTPS Storefront Website & Product Images CDN (S3 OAC)'
         Enabled: true
         DefaultRootObject: index.html
-        PriceClass: PriceClass_100
+        PriceClass: PriceClass_200
         HttpVersion: http2
         Origins:
           - Id: S3FrontendOrigin
             DomainName: !GetAtt FrontendAssetsBucket.RegionalDomainName
+            OriginAccessControlId: !GetAtt CloudFrontOriginAccessControl.Id
+            S3OriginConfig:
+              OriginAccessIdentity: ''
+          - Id: S3MediaOrigin
+            DomainName: !GetAtt ProductMediaBucket.RegionalDomainName
             OriginAccessControlId: !GetAtt CloudFrontOriginAccessControl.Id
             S3OriginConfig:
               OriginAccessIdentity: ''
@@ -136,6 +172,15 @@ Resources:
           Compress: true
           ForwardedValues:
             QueryString: false
+        CacheBehaviors:
+          - PathPattern: product_media/*
+            TargetOriginId: S3MediaOrigin
+            ViewerProtocolPolicy: redirect-to-https
+            AllowedMethods: [GET, HEAD, OPTIONS]
+            CachedMethods: [GET, HEAD]
+            Compress: true
+            ForwardedValues:
+              QueryString: false
         CustomErrorResponses:
           - ErrorCode: 403
             ResponseCode: 200
@@ -144,11 +189,47 @@ Resources:
             ResponseCode: 200
             ResponsePagePath: /index.html
 
+  FrontendAssetsBucketPolicy:
+    Type: AWS::S3::BucketPolicy
+    Properties:
+      Bucket: !Ref FrontendAssetsBucket
+      PolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Sid: AllowCloudFrontOACReadFrontend
+            Effect: Allow
+            Principal:
+              Service: cloudfront.amazonaws.com
+            Action: s3:GetObject
+            Resource: !Sub '${FrontendAssetsBucket.Arn}/*'
+            Condition:
+              StringEquals:
+                AWS:SourceArn: !Sub 'arn:aws:cloudfront::${AWS::AccountId}:distribution/${FrontendCloudFrontDistribution}'
+
+  ProductMediaBucketPolicy:
+    Type: AWS::S3::BucketPolicy
+    Properties:
+      Bucket: !Ref ProductMediaBucket
+      PolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Sid: AllowCloudFrontOACReadProductMedia
+            Effect: Allow
+            Principal:
+              Service: cloudfront.amazonaws.com
+            Action: s3:GetObject
+            Resource: !Sub '${ProductMediaBucket.Arn}/*'
+            Condition:
+              StringEquals:
+                AWS:SourceArn: !Sub 'arn:aws:cloudfront::${AWS::AccountId}:distribution/${FrontendCloudFrontDistribution}'
+
   # ---------------------------------------------------------------------------
-  # 3. AMAZON DYNAMODB TABLES (Capped within 25 RCU / 25 WCU Always Free Tier)
+  # 3. AMAZON DYNAMODB TABLES (19 RCU / 19 WCU Total - Within 25 Always Free Cap)
   # ---------------------------------------------------------------------------
   CategoriesTable:
     Type: AWS::DynamoDB::Table
+    DeletionPolicy: Retain
+    UpdateReplacePolicy: Retain
     Properties:
       TableName: !Sub '${TablePrefix}-categories'
       ProvisionedThroughput: { ReadCapacityUnits: 1, WriteCapacityUnits: 1 }
@@ -167,9 +248,15 @@ Resources:
             - { AttributeName: sort_order_str, KeyType: RANGE }
           Projection: { ProjectionType: ALL }
           ProvisionedThroughput: { ReadCapacityUnits: 1, WriteCapacityUnits: 1 }
+      Tags:
+        - { Key: Project, Value: LensCart }
+        - { Key: ArchitectureTier, Value: Tier-3-Database }
+        - { Key: Purpose, Value: Equipment-Categories-Table }
 
   ProductsTable:
     Type: AWS::DynamoDB::Table
+    DeletionPolicy: Retain
+    UpdateReplacePolicy: Retain
     Properties:
       TableName: !Sub '${TablePrefix}-products'
       ProvisionedThroughput: { ReadCapacityUnits: 2, WriteCapacityUnits: 2 }
@@ -203,9 +290,15 @@ Resources:
             - { AttributeName: price_sort_key, KeyType: RANGE }
           Projection: { ProjectionType: ALL }
           ProvisionedThroughput: { ReadCapacityUnits: 1, WriteCapacityUnits: 1 }
+      Tags:
+        - { Key: Project, Value: LensCart }
+        - { Key: ArchitectureTier, Value: Tier-3-Database }
+        - { Key: Purpose, Value: Photography-Products-Catalogue-Table }
 
   InventoryTable:
     Type: AWS::DynamoDB::Table
+    DeletionPolicy: Retain
+    UpdateReplacePolicy: Retain
     Properties:
       TableName: !Sub '${TablePrefix}-inventory'
       ProvisionedThroughput: { ReadCapacityUnits: 2, WriteCapacityUnits: 2 }
@@ -224,9 +317,15 @@ Resources:
             - { AttributeName: qty_sort_key, KeyType: RANGE }
           Projection: { ProjectionType: ALL }
           ProvisionedThroughput: { ReadCapacityUnits: 1, WriteCapacityUnits: 1 }
+      Tags:
+        - { Key: Project, Value: LensCart }
+        - { Key: ArchitectureTier, Value: Tier-3-Database }
+        - { Key: Purpose, Value: Warehouse-Inventory-And-Stock-Logs-Table }
 
   CartsTable:
     Type: AWS::DynamoDB::Table
+    DeletionPolicy: Retain
+    UpdateReplacePolicy: Retain
     Properties:
       TableName: !Sub '${TablePrefix}-carts'
       ProvisionedThroughput: { ReadCapacityUnits: 1, WriteCapacityUnits: 1 }
@@ -236,9 +335,15 @@ Resources:
       KeySchema:
         - { AttributeName: user_id, KeyType: HASH }
         - { AttributeName: item_id, KeyType: RANGE }
+      Tags:
+        - { Key: Project, Value: LensCart }
+        - { Key: ArchitectureTier, Value: Tier-3-Database }
+        - { Key: Purpose, Value: Customer-Shopping-Carts-Table }
 
   WishlistsTable:
     Type: AWS::DynamoDB::Table
+    DeletionPolicy: Retain
+    UpdateReplacePolicy: Retain
     Properties:
       TableName: !Sub '${TablePrefix}-wishlists'
       ProvisionedThroughput: { ReadCapacityUnits: 1, WriteCapacityUnits: 1 }
@@ -248,9 +353,15 @@ Resources:
       KeySchema:
         - { AttributeName: user_id, KeyType: HASH }
         - { AttributeName: product_id, KeyType: RANGE }
+      Tags:
+        - { Key: Project, Value: LensCart }
+        - { Key: ArchitectureTier, Value: Tier-3-Database }
+        - { Key: Purpose, Value: Customer-Saved-Wishlists-Table }
 
   AddressesTable:
     Type: AWS::DynamoDB::Table
+    DeletionPolicy: Retain
+    UpdateReplacePolicy: Retain
     Properties:
       TableName: !Sub '${TablePrefix}-addresses'
       ProvisionedThroughput: { ReadCapacityUnits: 1, WriteCapacityUnits: 1 }
@@ -260,9 +371,15 @@ Resources:
       KeySchema:
         - { AttributeName: user_id, KeyType: HASH }
         - { AttributeName: address_id, KeyType: RANGE }
+      Tags:
+        - { Key: Project, Value: LensCart }
+        - { Key: ArchitectureTier, Value: Tier-3-Database }
+        - { Key: Purpose, Value: Customer-Shipping-Addresses-Table }
 
   OrdersTable:
     Type: AWS::DynamoDB::Table
+    DeletionPolicy: Retain
+    UpdateReplacePolicy: Retain
     Properties:
       TableName: !Sub '${TablePrefix}-orders'
       ProvisionedThroughput: { ReadCapacityUnits: 2, WriteCapacityUnits: 2 }
@@ -295,9 +412,15 @@ Resources:
             - { AttributeName: created_sort_key, KeyType: RANGE }
           Projection: { ProjectionType: ALL }
           ProvisionedThroughput: { ReadCapacityUnits: 1, WriteCapacityUnits: 1 }
+      Tags:
+        - { Key: Project, Value: LensCart }
+        - { Key: ArchitectureTier, Value: Tier-3-Database }
+        - { Key: Purpose, Value: Customer-Orders-And-Idempotency-Table }
 
   ReviewsTable:
     Type: AWS::DynamoDB::Table
+    DeletionPolicy: Retain
+    UpdateReplacePolicy: Retain
     Properties:
       TableName: !Sub '${TablePrefix}-reviews'
       ProvisionedThroughput: { ReadCapacityUnits: 1, WriteCapacityUnits: 1 }
@@ -315,6 +438,10 @@ Resources:
             - { AttributeName: review_sort, KeyType: RANGE }
           Projection: { ProjectionType: ALL }
           ProvisionedThroughput: { ReadCapacityUnits: 1, WriteCapacityUnits: 1 }
+      Tags:
+        - { Key: Project, Value: LensCart }
+        - { Key: ArchitectureTier, Value: Tier-3-Database }
+        - { Key: Purpose, Value: Product-Ratings-And-Customer-Reviews-Table }
 
   # ---------------------------------------------------------------------------
   # 4. AMAZON SQS & SNS (20s Long Polling + DLQ for Free Tier Request Conservation)
@@ -339,6 +466,7 @@ Resources:
     Type: AWS::SNS::Topic
     Properties:
       TopicName: !Sub '${TablePrefix}-order-events'
+      DisplayName: 'LensCart [Tier-2 SNS]: Order & Inventory Alerts'
 
   # ---------------------------------------------------------------------------
   # 5. AWS LAMBDA FUNCTIONS + FUNCTION URL + 3-DAY CLOUDWATCH LOG RETENTION
@@ -347,14 +475,16 @@ Resources:
     Type: AWS::Serverless::Function
     Properties:
       FunctionName: !Sub '${TablePrefix}-core-api'
+      Description: 'LensCart [Tier-2 Application]: FastAPI Backend REST API Server (Products, Cart, Orders, Auth, Admin)'
       CodeUri: ../../backend/
-      Handler: app.handlers.api_handler.handler
+      Handler: app.lambda_handlers.api_handler.handler
+      Environment:
+        Variables:
+          CLOUDFRONT_MEDIA_DOMAIN: !GetAtt FrontendCloudFrontDistribution.DomainName
+          FRONTEND_ORIGIN: !Sub 'https://${FrontendCloudFrontDistribution.DomainName}'
+          CORS_ORIGINS: !Sub 'https://${FrontendCloudFrontDistribution.DomainName},${AllowedCorsOrigin}'
       FunctionUrlConfig:
         AuthType: NONE
-        Cors:
-          AllowOrigins: [!Ref AllowedCorsOrigin]
-          AllowMethods: [GET, POST, PATCH, DELETE, OPTIONS]
-          AllowHeaders: [Authorization, Content-Type, X-Request-Id]
       Policies:
         - DynamoDBCrudPolicy: { TableName: !Ref CategoriesTable }
         - DynamoDBCrudPolicy: { TableName: !Ref ProductsTable }
@@ -367,6 +497,15 @@ Resources:
         - S3CrudPolicy: { BucketName: !Ref ProductMediaBucket }
         - SQSSendMessagePolicy: { QueueName: !GetAtt OrderProcessingQueue.QueueName }
         - SNSPublishMessagePolicy: { TopicName: !GetAtt OrderEventsTopic.TopicName }
+        - Statement:
+            - Sid: CognitoUserPoolOperations
+              Effect: Allow
+              Action:
+                - cognito-idp:AdminAddUserToGroup
+                - cognito-idp:AdminDisableUser
+                - cognito-idp:AdminEnableUser
+                - cognito-idp:ListUsers
+              Resource: !GetAtt LensCartUserPool.Arn
 
   CoreApiLogGroup:
     Type: AWS::Logs::LogGroup
@@ -377,9 +516,10 @@ Resources:
   SqsOrderWorkerFunction:
     Type: AWS::Serverless::Function
     Properties:
-      FunctionName: !Sub '${TablePrefix}-sqs-order-worker'
+      FunctionName: !Sub '${TablePrefix}-order-worker'
+      Description: 'LensCart [Tier-2 Application]: Asynchronous SQS Order Confirmation & SNS Alert Worker'
       CodeUri: ../../backend/
-      Handler: app.handlers.sqs_worker.lambda_handler
+      Handler: app.lambda_handlers.order_worker.lambda_handler
       Events:
         OrderQueueEvent:
           Type: SQS
@@ -400,15 +540,17 @@ Resources:
   EventBridgeMaintenanceFunction:
     Type: AWS::Serverless::Function
     Properties:
-      FunctionName: !Sub '${TablePrefix}-daily-maintenance'
+      FunctionName: !Sub '${TablePrefix}-maintenance'
+      Description: 'LensCart [Tier-2 Application]: Daily Scheduled EventBridge Low-Stock & Stale Order Audit'
       CodeUri: ../../backend/
-      Handler: app.handlers.eventbridge_worker.lambda_handler
+      Handler: app.lambda_handlers.maintenance_handler.lambda_handler
       Events:
         DailyAuditSchedule:
           Type: Schedule
           Properties:
+            Name: !Sub '${TablePrefix}-tier2-daily-maintenance-rule'
             Schedule: rate(1 day)
-            Description: Runs once every 24h for low-stock & stale order checks
+            Description: 'LensCart [Tier-2 EventBridge]: Runs once every 24h for low-stock & stale order checks'
       Policies:
         - DynamoDBReadPolicy: { TableName: !Ref InventoryTable }
         - DynamoDBReadPolicy: { TableName: !Ref OrdersTable }
@@ -425,12 +567,23 @@ Outputs:
     Description: AWS Lambda Function URL for LensCart FastAPI Backend
     Value: !GetAtt CoreApiFunctionUrl.FunctionUrl
   CloudFrontDomainName:
-    Description: HTTPS CloudFront Distribution Domain for LensCart Frontend
+    Description: HTTPS CloudFront Distribution Domain for LensCart Frontend and Product Media
     Value: !GetAtt FrontendCloudFrontDistribution.DomainName
+  FrontendBucketName:
+    Description: Private S3 Bucket for React Vite Production Build
+    Value: !Ref FrontendAssetsBucket
+  ProductMediaBucketName:
+    Description: Private S3 Bucket for Product Photography Media
+    Value: !Ref ProductMediaBucket
   CognitoUserPoolId:
     Description: Amazon Cognito User Pool ID
     Value: !Ref LensCartUserPool
   CognitoClientId:
     Description: Amazon Cognito App Client ID
     Value: !Ref LensCartUserPoolClient
-
+  OrderQueueUrl:
+    Description: Amazon SQS Order Processing Queue URL
+    Value: !Ref OrderProcessingQueue
+  OrderEventsTopicArn:
+    Description: Amazon SNS Order Events Topic ARN
+    Value: !Ref OrderEventsTopic

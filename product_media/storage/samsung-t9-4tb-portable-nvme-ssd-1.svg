@@ -1,0 +1,27 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="900" height="675" viewBox="0 0 800 600">
+  <defs>
+    <linearGradient id="bgGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#0f1217"/>
+      <stop offset="55%" stop-color="#171b23"/>
+      <stop offset="100%" stop-color="#0c0e12"/>
+    </linearGradient>
+    <radialGradient id="glowGrad" cx="50%" cy="44%" r="48%">
+      <stop offset="0%" stop-color="#c89d54" stop-opacity="0.20"/>
+      <stop offset="100%" stop-color="#c89d54" stop-opacity="0.0"/>
+    </radialGradient>
+  </defs>
+  <rect width="800" height="600" fill="url(#bgGrad)"/>
+  <circle cx="400" cy="260" r="260" fill="url(#glowGrad)"/>
+  <rect x="32" y="28" width="736" height="544" rx="18" fill="none" stroke="#262c38" stroke-width="1.5"/>
+  <text x="64" y="68" fill="#c89d54" font-family="system-ui, -apple-system, sans-serif" font-size="14" font-weight="700" letter-spacing="3">SAMSUNG // LENSCART AUTHORIZED MEDIA</text>
+  <text x="736" y="68" text-anchor="end" fill="#8b95a7" font-family="monospace" font-size="12" letter-spacing="1.5">STUDIO FRONT PROFILE</text>
+  
+        <rect x="290" y="135" width="220" height="255" rx="18" fill="#191e28" stroke="#c89d54" stroke-width="3"/>
+        <rect x="320" y="165" width="160" height="85" rx="8" fill="#11151d" stroke="#334155" stroke-width="2"/>
+        <text x="400" y="218" text-anchor="middle" fill="#c89d54" font-family="monospace" font-size="24" font-weight="700">PRO CFX / SSD</text>
+        <rect x="335" y="295" width="130" height="55" rx="6" fill="#c89d54" fill-opacity="0.2" stroke="#c89d54" stroke-width="1.5"/>
+        
+  <text x="400" y="472" text-anchor="middle" fill="#f8fafc" font-family="system-ui, -apple-system, sans-serif" font-size="22" font-weight="700">Samsung T9 4TB USB 3.2 Gen 2x2 Portable NVMe SSD</text>
+  <text x="400" y="504" text-anchor="middle" fill="#94a3b8" font-family="system-ui, -apple-system, sans-serif" font-size="14">SAM-MU-PG4T0B • Universal • 2000 MB/s sequential read/write speeds, </text>
+  <line x1="330" y1="530" x2="470" y2="530" stroke="#c89d54" stroke-width="2" stroke-opacity="0.6"/>
+</svg>

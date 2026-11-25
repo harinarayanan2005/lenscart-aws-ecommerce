@@ -14,6 +14,7 @@ import {
 import { useAppDispatch, useAppSelector } from '../../store';
 import { fetchCategories, fetchProducts } from '../../store/slices/productSlice';
 import { ProductCard } from '../../components/products/ProductCard';
+import { resolveMediaAssetUrl } from '../../services/api';
 
 export const HomePage: React.FC = () => {
   const dispatch = useAppDispatch();
@@ -84,7 +85,7 @@ export const HomePage: React.FC = () => {
             <div className="col-lg-6">
               <div className="lc-card p-3" style={{ boxShadow: 'var(--lc-shadow-lg)' }}>
                 <img
-                  src="https://images.unsplash.com/photo-1516035069371-29a1b244cc32?auto=format&fit=crop&w=1200&q=85"
+                  src={resolveMediaAssetUrl('product_media/cameras/sony-alpha-a7r-v-body-1.jpg')}
                   alt="Professional Mirrorless Camera System"
                   className="w-100 rounded"
                   style={{ maxHeight: 390, objectFit: 'cover' }}

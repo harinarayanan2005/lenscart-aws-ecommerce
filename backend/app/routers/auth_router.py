@@ -1,18 +1,18 @@
 from typing import Any, Dict
 from fastapi import APIRouter, Depends
+from fastapi.security import HTTPAuthorizationCredentials
 from app.aws.cognito import cognito_idp
-from app.dependencies.auth import get_current_user, require_customer
-from app.repositories.customer_repo import AddressRepository
+from app.dependencies.auth import bearer_scheme, get_current_user
 from app.schemas.models import (
-    AddressCreateRequest,
+    ConfirmSignupRequest,
     ForgotPasswordRequest,
     LoginRequest,
+    RefreshTokenRequest,
     RegisterRequest,
     ResetPasswordRequest,
 )
 
-router = APIRouter(tags=["Authentication & Profile"])
-addr_repo = AddressRepository()
+router = APIRouter(tags=["Authentication"])
 
 
 @router.post("/auth/login")
@@ -32,16 +32,36 @@ async def register(payload: RegisterRequest) -> Dict[str, Any]:
     return {"success": True, "data": data}
 
 
+@router.post("/auth/confirm-signup")
+async def confirm_signup(payload: ConfirmSignupRequest) -> Dict[str, Any]:
+    data = cognito_idp.confirm_registration(payload.email, payload.confirmation_code)
+    return {"success": True, "data": data}
+
+
+@router.post("/auth/refresh")
+async def refresh_token(payload: RefreshTokenRequest) -> Dict[str, Any]:
+    data = cognito_idp.refresh_session(payload.refresh_token)
+    return {"success": True, "data": data}
+
+
+@router.post("/auth/logout")
+async def logout(
+    credentials: HTTPAuthorizationCredentials | None = Depends(bearer_scheme),
+) -> Dict[str, Any]:
+    token = credentials.credentials if credentials else ""
+    cognito_idp.logout(token)
+    return {"success": True, "data": {"message": "Signed out successfully."}}
+
+
 @router.post("/auth/forgot-password")
 async def forgot_password(payload: ForgotPasswordRequest) -> Dict[str, Any]:
     code = cognito_idp.initiate_password_reset(payload.email)
-    return {
-        "success": True,
-        "data": {
-            "message": "Verification code issued. Please check your email or use the dev code hint.",
-            "reset_code_hint": code,
-        },
+    resp_data: Dict[str, Any] = {
+        "message": "If an account exists for this email, a verification code has been issued.",
     }
+    if code:
+        resp_data["reset_code_hint"] = code
+    return {"success": True, "data": resp_data}
 
 
 @router.post("/auth/reset-password")
@@ -58,28 +78,3 @@ async def reset_password(payload: ResetPasswordRequest) -> Dict[str, Any]:
 @router.get("/auth/me")
 async def get_me(user: Dict[str, Any] = Depends(get_current_user)) -> Dict[str, Any]:
     return {"success": True, "data": user}
-
-
-@router.get("/profile/addresses")
-async def list_my_addresses(user: Dict[str, Any] = Depends(require_customer)) -> Dict[str, Any]:
-    addresses = addr_repo.list_addresses(user["sub"])
-    return {"success": True, "data": addresses}
-
-
-@router.post("/profile/addresses", status_code=201)
-async def create_my_address(
-    payload: AddressCreateRequest,
-    user: Dict[str, Any] = Depends(require_customer),
-) -> Dict[str, Any]:
-    created = addr_repo.create_address(user["sub"], payload.model_dump())
-    return {"success": True, "data": created}
-
-
-@router.delete("/profile/addresses/{address_id}")
-async def delete_my_address(
-    address_id: str,
-    user: Dict[str, Any] = Depends(require_customer),
-) -> Dict[str, Any]:
-    deleted = addr_repo.delete_address(user["sub"], address_id)
-    return {"success": True, "data": {"deleted": deleted}}
-
