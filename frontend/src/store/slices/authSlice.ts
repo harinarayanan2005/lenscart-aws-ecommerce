@@ -18,14 +18,18 @@ interface AuthState {
 
 function loadSavedUser(): UserProfile | null {
   try {
-    const raw = localStorage.getItem(USER_STORAGE_KEY);
+    const raw = sessionStorage.getItem(USER_STORAGE_KEY);
     return raw ? (JSON.parse(raw) as UserProfile) : null;
   } catch {
     return null;
   }
 }
 
-const savedToken = localStorage.getItem(TOKEN_STORAGE_KEY);
+// Clear any legacy localStorage auth keys so every new browser tab opens unauthenticated
+localStorage.removeItem(TOKEN_STORAGE_KEY);
+localStorage.removeItem(USER_STORAGE_KEY);
+
+const savedToken = sessionStorage.getItem(TOKEN_STORAGE_KEY);
 const savedUser = loadSavedUser();
 
 const initialState: AuthState = {
@@ -42,8 +46,8 @@ export const loginUser = createAsyncThunk(
   async ({ email, password }: { email: string; password: string }, { rejectWithValue }) => {
     try {
       const response = await authApi.login(email, password);
-      localStorage.setItem(TOKEN_STORAGE_KEY, response.access_token);
-      localStorage.setItem(USER_STORAGE_KEY, JSON.stringify(response.user));
+      sessionStorage.setItem(TOKEN_STORAGE_KEY, response.access_token);
+      sessionStorage.setItem(USER_STORAGE_KEY, JSON.stringify(response.user));
       return response;
     } catch (error) {
       return rejectWithValue(extractErrorMessage(error));
@@ -60,8 +64,8 @@ export const registerUser = createAsyncThunk(
     try {
       const response = await authApi.register(payload);
       if (response.access_token && !response.requires_confirmation) {
-        localStorage.setItem(TOKEN_STORAGE_KEY, response.access_token);
-        localStorage.setItem(USER_STORAGE_KEY, JSON.stringify(response.user));
+        sessionStorage.setItem(TOKEN_STORAGE_KEY, response.access_token);
+        sessionStorage.setItem(USER_STORAGE_KEY, JSON.stringify(response.user));
       }
       return response;
     } catch (error) {
@@ -75,7 +79,7 @@ export const fetchCurrentUser = createAsyncThunk(
   async (_, { rejectWithValue }) => {
     try {
       const user = await authApi.getMe();
-      localStorage.setItem(USER_STORAGE_KEY, JSON.stringify(user));
+      sessionStorage.setItem(USER_STORAGE_KEY, JSON.stringify(user));
       return user;
     } catch (error) {
       return rejectWithValue(extractErrorMessage(error));
@@ -93,6 +97,8 @@ const authSlice = createSlice({
       state.isAuthenticated = false;
       state.isAdmin = false;
       state.error = null;
+      sessionStorage.removeItem(TOKEN_STORAGE_KEY);
+      sessionStorage.removeItem(USER_STORAGE_KEY);
       localStorage.removeItem(TOKEN_STORAGE_KEY);
       localStorage.removeItem(USER_STORAGE_KEY);
     },
@@ -149,8 +155,8 @@ const authSlice = createSlice({
         state.token = null;
         state.isAuthenticated = false;
         state.isAdmin = false;
-        localStorage.removeItem(TOKEN_STORAGE_KEY);
-        localStorage.removeItem(USER_STORAGE_KEY);
+        sessionStorage.removeItem(TOKEN_STORAGE_KEY);
+        sessionStorage.removeItem(USER_STORAGE_KEY);
       });
   },
 });

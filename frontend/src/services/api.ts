@@ -74,7 +74,7 @@ export const REFRESH_TOKEN_STORAGE_KEY = 'lenscart_refresh_token';
 export const USER_STORAGE_KEY = 'lenscart_user_profile';
 
 apiClient.interceptors.request.use((config: InternalAxiosRequestConfig) => {
-  const token = localStorage.getItem(TOKEN_STORAGE_KEY);
+  const token = sessionStorage.getItem(TOKEN_STORAGE_KEY);
   if (token && config.headers) {
     config.headers.Authorization = `Bearer ${token}`;
   }
